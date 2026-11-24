@@ -13571,6 +13571,16 @@ md_apply_fix3 (fixP, valP, seg)
 		      mask = (((mask - 1) << 1) | 1) << howto->bitpos;
 		      field = (-value >> howto->rightshift) << howto->bitpos;
 
+		      /* The VFPU loads and stores use the low two bits of
+			 their offset field for other purposes.  */
+		      if ((contents & 0xfc000000) == 0xc8000000
+			  || (contents & 0xfc000000) == 0xd8000000
+			  || (contents & 0xfc000000) == 0xd4000000
+			  || (contents & 0xfc000000) == 0xe8000000
+			  || (contents & 0xfc000000) == 0xf8000000
+			  || (contents & 0xfc000000) == 0xf4000000)
+			mask = 0xfffc;
+
 		      bfd_put_bits ((field & mask) | (contents & ~mask),
 				    fixP->fx_frag->fr_literal + fixP->fx_where,
 				    fixP->fx_size * 8,
