@@ -170,6 +170,228 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 #define MDMX_FMTSEL_VEC_QH	0x15
 #define MDMX_FMTSEL_VEC_OB	0x16
 
+#include "vfpu.h"
+
+#define VF_MASK_VT		0x7f
+#define VF_SH_VT		16
+#define VF_MASK_VS		0x7f
+#define VF_SH_VS		8
+#define VF_MASK_VD		0x7f
+#define VF_SH_VD		0
+#define VF_MASK_VML		0x1f
+#define VF_SH_VML		16
+#define VF_MASK_VMH		0x3
+#define VF_SH_VMH		0
+#define VF_MASK_VNL		0x1f
+#define VF_SH_VNL		16
+#define VF_MASK_VNH		0x1
+#define VF_SH_VNH		0
+#define VF_MASK_OFFSET		0x3fff
+#define VF_SH_OFFSET		2
+#define VF_MASK_CC		0xf
+#define VF_SH_CC		0
+#define VF_MASK_CONST		0x1f
+#define VF_SH_CONST		16
+#define VF_MASK_SCALE		0x1f
+#define VF_SH_SCALE		16
+#define VF_MASK_BCOND		0x7
+#define VF_SH_BCOND		18
+#define VF_MASK_MCOND		0x7
+#define VF_SH_MCOND		16
+#define VF_MASK_VCD		0xff
+#define VF_SH_VCD		0
+#define VF_MASK_VCS		0xff
+#define VF_SH_VCS		8
+#define VF_MASK_ROT		0x1f
+#define VF_SH_ROT		16
+#define VF_MASK_WRAP		0xff
+#define VF_SH_WRAP		16
+#define VF_MASK_TSIGN		0x1
+#define VF_SH_TSIGN		5
+#define VF_MASK_BMCOND		0x1f
+#define VF_SH_BMCOND		0
+#define VF_MASK_HFLOAT		0xffff
+#define VF_SH_HFLOAT		0
+#define VF_MASK_PFX		0xffffff
+#define VF_SH_PFX		0
+#define VF_MASK_RWB		0x1
+#define VF_SH_RWB		1
+
+#define	VF_MASK_PFX_SWZ		0x3
+#define	VF_SH_PFX_SWZ		0
+#define	VF_MASK_PFX_ABS		0x1
+#define	VF_SH_PFX_ABS		8
+#define	VF_MASK_PFX_CST		0x1
+#define	VF_SH_PFX_CST		12
+#define	VF_MASK_PFX_NEG		0x1
+#define	VF_SH_PFX_NEG		16
+#define	VF_MASK_PFX_SAT		0x3
+#define	VF_SH_PFX_SAT		0
+#define	VF_MASK_PFX_MSK		0x1
+#define	VF_SH_PFX_MSK		8
+
+#define	VF_MASK_ROT_COS		0x3
+#define	VF_SH_ROT_COS		0
+#define	VF_MASK_ROT_SIN		0x3
+#define	VF_SH_ROT_SIN		2
+#define	VF_MASK_ROT_NEG		0x1
+#define	VF_SH_ROT_NEG		4
+
+#define	VF_MASK_MR_MTX		0x7
+#define	VF_SH_MR_MTX		2
+#define	VF_MASK_MR_IDX		0x3
+#define	VF_SH_MR_IDX		0
+#define	VF_MASK_MR_FSL		0x3
+#define	VF_SH_MR_FSL		5
+#define	VF_MASK_MR_RXC		0x1
+#define	VF_SH_MR_RXC		5
+#define	VF_MASK_MR_VFSL		0x1
+#define	VF_SH_MR_VFSL		6
+
+#define	VF_MAX_MR_MTX		7
+#define	VF_MAX_MR_IDX		3
+#define	VF_MAX_MR_FSL		3
+#define	VF_MAX_MR_VIDX		1
+#define	VF_MAX_MR_VFSL		1
+
+#define	VF_MIN_MR		0
+#define	VF_MAX_MR		127
+#define	VF_MIN_CR		128
+#define	VF_MAX_CR		255
+#define	VF_MIN_VCR		128
+#define	VF_MAX_VCR		143
+#define	VF_MIN_CC		0
+#define	VF_MAX_CC		15
+#define	VF_MIN_CONST		1
+#define	VF_MAX_CONST		19
+#define	VF_MIN_SCALE		0
+#define	VF_MAX_SCALE		31
+#define	VF_MIN_BCOND		0
+#define	VF_MAX_BCOND		5
+#define	VF_MIN_MCOND		0
+#define	VF_MAX_MCOND		6
+#define	VF_MIN_WRAP		0
+#define	VF_MAX_WRAP		255
+#define	VF_MIN_ROT		0
+#define	VF_MAX_ROT		31
+#define	VF_MIN_TSIGN		0
+#define	VF_MAX_TSIGN		1
+#define	VF_MIN_BMCOND		0
+#define	VF_MAX_BMCOND		31
+#define	VF_MIN_HFLOAT		0
+#define	VF_MAX_HFLOAT		0xffff
+
+#define	VF_MASK_F32_SIGN	0x1
+#define	VF_SH_F32_SIGN		31
+#define	VF_MASK_F32_EXP		0xff
+#define	VF_SH_F32_EXP		23
+#define	VF_MASK_F32_FRA		0x7fffff
+#define	VF_SH_F32_FRA		0
+#define	VF_MASK_F16_SIGN	0x1
+#define	VF_SH_F16_SIGN		15
+#define	VF_MASK_F16_EXP		0x1f
+#define	VF_SH_F16_EXP		10
+#define	VF_MASK_F16_FRA		0x3ff
+#define	VF_SH_F16_FRA		0
+
+#define	VF_MIN_F32_EXP		0
+#define	VF_MAX_F32_EXP		255
+#define	VF_BIAS_F32_EXP		127
+#define	VF_MIN_F16_EXP		0
+#define	VF_MAX_F16_EXP		31
+#define	VF_BIAS_F16_EXP		15
+
+#define OP_SH_VFPU_DELTA	0
+#define OP_MASK_VFPU_DELTA	0xfffc
+#define OP_SH_VFPU_IMM3		16
+#define OP_MASK_VFPU_IMM3	0x7
+#define OP_SH_VFPU_IMM5		16
+#define OP_MASK_VFPU_IMM5	0x1f
+#define OP_SH_VFPU_IMM8		16
+#define OP_MASK_VFPU_IMM8	0xff
+#define OP_SH_VFPU_CC		18	/* Condition code. */
+#define OP_MASK_VFPU_CC		0x7
+#define OP_SH_VFPU_CONST	16
+#define OP_MASK_VFPU_CONST	0x1f
+#define OP_SH_VFPU_COND		0	/* Conditional compare. */
+#define OP_MASK_VFPU_COND	0xf
+#define OP_SH_VFPU_VMTVC	0
+#define OP_MASK_VFPU_VMTVC	0xff
+#define OP_SH_VFPU_VMFVC	8
+#define OP_MASK_VFPU_VMFVC	0xff
+#define OP_SH_VFPU_RWB		1
+#define OP_MASK_VFPU_RWB	0x1
+#define OP_SH_VFPU_ROT		16	/* Rotators used in vrot. */
+#define OP_MASK_VFPU_ROT	0x1f
+#define OP_SH_VFPU_FLOAT16	0
+#define OP_MASK_VFPU_FLOAT16	0xffff
+
+/* VFPU registers. */
+#define OP_SH_VFPU_VD		0
+#define OP_MASK_VFPU_VD		0x7f
+#define OP_SH_VFPU_VS		8
+#define OP_MASK_VFPU_VS		0x7f
+#define OP_SH_VFPU_VT		16
+#define OP_MASK_VFPU_VT		0x7f
+#define OP_SH_VFPU_VT_LO	16	/* Bits 0-4 of vt. */
+#define OP_MASK_VFPU_VT_LO	0x1f
+#define OP_SH_VFPU_VT_HI	5	/* Right-shifted. */
+#define OP_MASK_VFPU_VT_HI1	0x1	/* Bit 5 of vt. */
+#define OP_MASK_VFPU_VT_HI2	0x3	/* Bits 5-6 of vt. */
+/* Special handling of vs in vmmul instructions. */
+#define VFPU_OP_VT_VS_VD	0xff800000
+#define VFPU_OPCODE_VMMUL	0xf0000000
+
+/* VFPU condition codes.  FL and TR accept no arguments, while any conditions
+   above and including EZ only accept one argument.  The rest require two
+   arguments.  */
+enum
+{
+  VFPU_COND_FL, VFPU_COND_EQ, VFPU_COND_LT, VFPU_COND_LE,
+  VFPU_COND_TR, VFPU_COND_NE, VFPU_COND_GE, VFPU_COND_GT,
+  VFPU_COND_EZ, VFPU_COND_EN, VFPU_COND_EI, VFPU_COND_ES,
+  VFPU_COND_NZ, VFPU_COND_NN, VFPU_COND_NI, VFPU_COND_NS,
+  VFPU_NUM_CONDS
+};
+
+/* VFPU prefix instruction operands.  The *_SH_* values really specify where
+   the bitfield begins, as VFPU prefix instructions have four operands
+   encoded within the immediate field. */
+#define VFPU_SH_PFX_NEG		16
+#define VFPU_MASK_PFX_NEG	0x1	/* Negation. */
+#define VFPU_SH_PFX_CST		12
+#define VFPU_MASK_PFX_CST	0x1	/* Constant. */
+#define VFPU_SH_PFX_ABS_CSTHI	8
+#define VFPU_MASK_PFX_ABS_CSTHI	0x1	/* Abs/Constant (bit 2). */
+#define VFPU_SH_PFX_SWZ_CSTLO	0
+#define VFPU_MASK_PFX_SWZ_CSTLO	0x3	/* Swizzle/Constant (bits 0-1). */
+#define VFPU_SH_PFX_MASK	8
+#define VFPU_MASK_PFX_MASK	0x1	/* Mask. */
+#define VFPU_SH_PFX_SAT		0
+#define VFPU_MASK_PFX_SAT	0x3	/* Saturation. */
+
+/* Special handling of the vrot instructions. */
+#define VFPU_MASK_OP_SIZE	0x8080	/* Masks the operand size (pair, triple, quad). */
+#define VFPU_OP_SIZE_PAIR	0x80
+#define VFPU_OP_SIZE_TRIPLE	0x8000
+#define VFPU_OP_SIZE_QUAD	0x8080
+/* Note that these are within the rotators field, and not the full opcode. */
+#define VFPU_SH_ROT_HI		2
+#define VFPU_MASK_ROT_HI	0x3
+#define VFPU_SH_ROT_LO		0
+#define VFPU_MASK_ROT_LO	0x3
+#define VFPU_SH_ROT_NEG		4	/* Negation. */
+#define VFPU_MASK_ROT_NEG	0x1
+
+/* VFPU 16-bit floating-point format. */
+#define VFPU_FLOAT16_EXP_MAX	0x1f
+#define VFPU_SH_FLOAT16_SIGN	15
+#define VFPU_MASK_FLOAT16_SIGN	0x1
+#define VFPU_SH_FLOAT16_EXP	10
+#define VFPU_MASK_FLOAT16_EXP	0x1f
+#define VFPU_SH_FLOAT16_FRAC	0
+#define VFPU_MASK_FLOAT16_FRAC	0x3ff
+
 /* This structure holds information for a particular instruction.  */
 
 struct mips_opcode
@@ -241,6 +463,29 @@ struct mips_opcode
    "+C" 5 bit ext size, which becomes MSBD (OP_*_EXTMSBD).
 	Requires that "+A" occur first to set position.
 	Enforces: 0 < (pos+size) <= 32.
+
+   Sony Allegrex VFPU instructions:
+   "?o"
+   "?0" - "?3"
+   "?4" - "?7"
+   "?a"
+   "?b"
+   "?c"
+   "?e"
+   "?f"
+   "?i"
+   "?q"
+   "?r"
+   "?u"
+   "?w"
+   "?d"
+   "?m"
+   "?n"
+   "?s"
+   "?t"
+   "?v"
+   "?x"
+   "?z"
 
    Floating point instructions:
    "D" 5 bit destination register (OP_*_FD)
