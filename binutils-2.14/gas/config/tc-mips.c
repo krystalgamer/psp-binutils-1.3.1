@@ -3282,7 +3282,9 @@ macro_build (place, counter, ep, name, fmt, va_alist)
 		      || *r == BFD_RELOC_MIPS_GOT_PAGE
 		      || *r == BFD_RELOC_MIPS_GOT_OFST
 		      || *r == BFD_RELOC_MIPS_GOT_LO16
-		      || *r == BFD_RELOC_MIPS_CALL_LO16);
+		      || *r == BFD_RELOC_MIPS_CALL_LO16
+		      || (ep->X_op == O_subtract
+			  && *r == BFD_RELOC_PCREL_LO16));
 	      break;
 	    case 'd':
 	      insn.insn_opcode |= va_arg (args, int) << VF_SH_VD;
