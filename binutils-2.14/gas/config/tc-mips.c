@@ -10771,8 +10771,6 @@ mips_ip (str, ip)
 		{
 		  int operand;
 		  int shift;
-		  static const char order[] = "xyzwXYZW";
-
 		  int pfx_msk = 0;
 		  int pfx_sat = 0;
 		  char *pfx_str = s;
@@ -10795,12 +10793,6 @@ mips_ip (str, ip)
 		  else if (s[0] == '1')	/* -1:1 or -1:+1 */
 		    {
 		      pfx_sat = 3;
-		      s++;
-		    }
-		  else if ((s[0] == order[(*args) - '4'])
-			   || (s[0] == order[(*args) - '4' + 4]))
-		    {
-		      pfx_sat = 0;
 		      s++;
 		    }
 
