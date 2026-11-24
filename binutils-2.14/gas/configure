@@ -2756,6 +2756,9 @@ EOF
 	  mipstx39 | mipstx39el)
 	    mips_cpu=r3900
 	    ;;
+	  mipspspel)
+	    mips_cpu=allegrex
+	    ;;
 	  mips64vr | mips64vrel)
 	    mips_cpu=vr4100
 	    ;;
