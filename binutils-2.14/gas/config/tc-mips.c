@@ -87,32 +87,6 @@ static char *mips_regmask_frag;
 
 #define ZERO 0
 #define AT  1
-#define V0  2
-#define V1  3
-#define A0  4
-#define A1  5
-#define A2  6
-#define A3  7
-#define T0  8
-#define T1  9
-#define T2  10
-#define T3  11
-#define T4  12
-#define T5  13
-#define T6  14
-#define T7  15
-#define S0  16
-#define S1  17
-#define S2  18
-#define S3  19
-#define S4  20
-#define S5  21
-#define S6  22
-#define S7  23
-#define T8  24
-#define T9  25
-#define K0  26
-#define K1  27
 #define TREG 24
 #define PIC_CALL_REG 25
 #define KT0 26
@@ -397,12 +371,15 @@ static int mips_big_got = 0;
    instructions.  */
 static int mips_trap = 0;
 
-/* 1 if unaligned word loads and stores (ulw, usw) should not use
-   lwl/lwr/swl/swr, which the Allegrex lacks.  Set by -mno-ulsw.  */
+/* 1 if unaligned word loads and stores (ulw, usw) are expanded into
+   byte loads and stores on the Allegrex 3.1, which lacks lwl, lwr, swl
+   and swr; those instructions are then rejected.  -mulsw clears it,
+   -mno-ulsw sets it.  */
 static int mips_no_ulsw = 1;
 
-/* 1 if the first source matrix of vmmul is written transposed (as
-   the instruction encodes it).  Set by -vmmul-trans.  */
+/* 1 if vmmul's first source matrix is written transposed, as the
+   instruction encodes it.  -no-vmmul-trans clears it, -vmmul-trans
+   sets it.  */
 static int vfpu_mmul_trans = 1;
 
 /* 1 if double width floating point constants should not be constructed
@@ -3116,8 +3093,7 @@ macro_build (place, counter, ep, name, fmt, va_alist)
   			       (mips_opts.isa
 	      		        | (file_ase_mips16 ? INSN_MIPS16 : 0)),
 			       mips_arch)
-	  && ((mips_arch != CPU_R4650 && ! CPU_IS_ALLEGREX (mips_arch))
-	      || (insn.insn_mo->pinfo & FP_D) == 0))
+	  && ((mips_arch != CPU_R4650 && ! CPU_IS_ALLEGREX (mips_arch)) || (insn.insn_mo->pinfo & FP_D) == 0))
 	break;
 
       ++insn.insn_mo;
@@ -8436,7 +8412,9 @@ macro2 (ip)
 	tempreg = AT;
       if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	{
-	  /* Load the bytes one at a time, the most significant first.  */
+	  /* Without lwl and lwr, load the bytes one at a time, the most
+	     significant first, shifting each one in.  The address register
+	     must not be overwritten before the last load.  */
 	  if (treg == breg)
 	    as_bad (_("opcode not supported on this processor"));
 	  if (! target_big_endian)
@@ -8481,6 +8459,8 @@ macro2 (ip)
       break;
 
     case M_ULV_S:
+      /* ulv.s needs lwl and lwr, which the Allegrex 3.1 lacks unless
+	 -mulsw is given.  */
       if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	as_bad (_("opcode not supported on this processor"));
       off = 3;
@@ -8514,6 +8494,8 @@ macro2 (ip)
       return;
 
     case M_ULV_Q_AB:
+      /* Load the address into $at, then use lvl.q and lvr.q relative
+	 to it.  */
       off = 12;
       used_at = 1;
       load_address (&icnt, AT, &offset_expr, &used_at);
@@ -8620,7 +8602,9 @@ macro2 (ip)
 	as_bad (_("operand overflow"));
       if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	{
-	  /* Store the bytes one at a time, rotating each into place.  */
+	  /* Without swl and swr, store the bytes one at a time, the least
+	     significant first, rotating the register so that each one is
+	     in place; four rotations leave it as it was.  */
 	  if (target_big_endian)
 	    offset_expr.X_add_number += off;
 	  while (off-- >= 0)
@@ -8654,6 +8638,7 @@ macro2 (ip)
 	as_bad (_("operand overflow"));
       macro_build ((char *) NULL, &icnt, (expressionS *) NULL, "mfv", "t,?d0z",
 		   AT, vmreg);
+      /* usv.s stores the word with swl and swr if it may.  */
       if (!(mips_no_ulsw && mips_arch == CPU_ALLEGREX31))
 	{
 	  if (! target_big_endian)
@@ -8698,6 +8683,7 @@ macro2 (ip)
       return;
 
     case M_USV_Q_AB:
+      /* As for ulv.q, with svl.q and svr.q.  */
       off = 12;
       used_at = 1;
       load_address (&icnt, AT, &offset_expr, &used_at);
@@ -8733,6 +8719,7 @@ macro2 (ip)
 		     "d,v,t", AT, AT, breg);
       if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	{
+	  /* As for usw, relative to the address in $at.  */
 	  if (target_big_endian)
 	    offset_expr.X_add_number += off;
 	  while (off-- >= 0)
@@ -9302,7 +9289,9 @@ mips_ip (str, ip)
       *s++ = '\0';
     }
 
-  /* The VFPU takes the place of coprocessor 2.  */
+  /* The VFPU takes the place of coprocessor 2, so the coprocessor 2
+     loads, stores and moves (lwc2, swc2, mfc2, mtc2, cfc2 and ctc2) are
+     not available while it is enabled.  */
   if (mips_opts.vfpu && strlen (str) == 4 && str[2] == 'c' && str[3] == '2'
       && (((str[0] == 'l' || str[0] == 's') && str[1] == 'w')
 	  || ((str[0] == 'm' || str[0] == 'c')
@@ -9364,13 +9353,10 @@ mips_ip (str, ip)
 
       if (insn->pinfo != INSN_MACRO)
 	{
-	  if ((mips_arch == CPU_R4650 || CPU_IS_ALLEGREX (mips_arch))
-	      && (insn->pinfo & FP_D) != 0)
+	  if ((mips_arch == CPU_R4650 || CPU_IS_ALLEGREX (mips_arch)) && (insn->pinfo & FP_D) != 0)
 	    ok = FALSE;
 	}
 
-      /* The Allegrex 3.1 has no unaligned load and store word
-	 instructions.  */
       if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	{
 	  if (strcmp (insn->name, "lwl") == 0
@@ -10641,7 +10627,6 @@ mips_ip (str, ip)
 		{
 		  int operand;
 		  int shift;
-
 		  int pfx_neg = 0;
 		  int pfx_cst = 0;
 		  int pfx_abs = 0;
@@ -10855,27 +10840,30 @@ mips_ip (str, ip)
 		    goto notreg;
 		  else
 		    {
-				const char regName[32][5] =
+		      if (s[1] == 'r' && s[2] == 'a')
 			{
-					"zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
-					"t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", 
-					"s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-					"t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
-				};
-				int i;
-
-				for(i = 0; i < 32; i++)
-			{
-					if(strncmp(&s[1], regName[i], strlen(regName[i])) == 0)
-			{
-						break;
+			  s += 3;
+			  regno = RA;
 			}
-			}
-
-				if(i < 32)
+		      else if (s[1] == 'f' && s[2] == 'p')
 			{
-					s += strlen(regName[i]) + 1;
-					regno = i;
+			  s += 3;
+			  regno = FP;
+			}
+		      else if (s[1] == 's' && s[2] == 'p')
+			{
+			  s += 3;
+			  regno = SP;
+			}
+		      else if (s[1] == 'g' && s[2] == 'p')
+			{
+			  s += 3;
+			  regno = GP;
+			}
+		      else if (s[1] == 'a' && s[2] == 't')
+			{
+			  s += 3;
+			  regno = AT;
 			}
 		      else if (s[1] == 'k' && s[2] == 't' && s[3] == '0')
 			{
@@ -14459,8 +14447,7 @@ s_mipsset (x)
 	}
       mips_opts.vfpu = reset && mips_arch == CPU_ALLEGREX31;
     }
-  else if (strcmp (name, "allegrex") == 0
-	   || strcmp (name, "allegrex31") == 0)
+  else if (strcmp (name, "allegrex") == 0 || strcmp (name, "allegrex31") == 0)
     {
       mips_opts.vfpu = 1;
       mips_opts.isa = ISA_MIPS2;
