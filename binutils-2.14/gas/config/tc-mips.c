@@ -6162,10 +6162,14 @@ macro (ip)
       coproc = 1;
       goto ld;
     case M_LWL_AB:
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
+	as_bad (_("opcode not supported on this processor"));
       s = "lwl";
       lr = 1;
       goto ld;
     case M_LWR_AB:
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
+	as_bad (_("opcode not supported on this processor"));
       s = "lwr";
       lr = 1;
       goto ld;
@@ -6270,9 +6274,13 @@ macro (ip)
       coproc = 1;
       goto st;
     case M_SWL_AB:
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
+	as_bad (_("opcode not supported on this processor"));
       s = "swl";
       goto st;
     case M_SWR_AB:
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
+	as_bad (_("opcode not supported on this processor"));
       s = "swr";
       goto st;
     case M_SC_AB:
@@ -8423,16 +8431,42 @@ macro2 (ip)
 	tempreg = treg;
       else
 	tempreg = AT;
-      if (! target_big_endian)
-	offset_expr.X_add_number += off;
-      macro_build ((char *) NULL, &icnt, &offset_expr, s, "t,o(b)", tempreg,
-		   (int) BFD_RELOC_LO16, breg);
-      if (! target_big_endian)
-	offset_expr.X_add_number -= off;
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
+	{
+	  /* Load the bytes one at a time, the most significant first.  */
+	  if (treg == breg)
+	    as_bad (_("opcode not supported on this processor"));
+	  if (! target_big_endian)
+	    offset_expr.X_add_number += off;
+	  macro_build ((char *) NULL, &icnt, &offset_expr, "lbu", "t,o(b)",
+		       treg, (int) BFD_RELOC_LO16, breg);
+	  while (off-- > 0)
+	    {
+	      macro_build ((char *) NULL, &icnt, (expressionS *) NULL, "sll",
+			   "d,w,<", treg, treg, 8);
+	      if (! target_big_endian)
+		--offset_expr.X_add_number;
+	      else
+		++offset_expr.X_add_number;
+	      macro_build ((char *) NULL, &icnt, &offset_expr, "lbu", "t,o(b)",
+			   AT, (int) BFD_RELOC_LO16, breg);
+	      macro_build ((char *) NULL, &icnt, (expressionS *) NULL, "or",
+			   "d,v,t", treg, treg, AT);
+	    }
+	}
       else
-	offset_expr.X_add_number += off;
-      macro_build ((char *) NULL, &icnt, &offset_expr, s2, "t,o(b)", tempreg,
-		   (int) BFD_RELOC_LO16, breg);
+	{
+	  if (! target_big_endian)
+	    offset_expr.X_add_number += off;
+	  macro_build ((char *) NULL, &icnt, &offset_expr, s, "t,o(b)",
+		       tempreg, (int) BFD_RELOC_LO16, breg);
+	  if (! target_big_endian)
+	    offset_expr.X_add_number -= off;
+	  else
+	    offset_expr.X_add_number += off;
+	  macro_build ((char *) NULL, &icnt, &offset_expr, s2, "t,o(b)",
+		       tempreg, (int) BFD_RELOC_LO16, breg);
+	}
 
       /* If necessary, move the result in tempreg the final destination.  */
       if (treg == tempreg)
@@ -8444,7 +8478,7 @@ macro2 (ip)
       break;
 
     case M_ULV_S:
-      if (CPU_IS_ALLEGREX (mips_arch))
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	as_bad (_("opcode not supported on this processor"));
       off = 3;
       if (offset_expr.X_add_number >= 0x8000 - off)
@@ -8486,6 +8520,8 @@ macro2 (ip)
       s2 = "lwr";
       off = 3;
     ulwa:
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
+	as_bad (_("opcode not supported on this processor"));
       used_at = 1;
       load_address (&icnt, AT, &offset_expr, &used_at);
       if (breg != 0)
@@ -8562,6 +8598,24 @@ macro2 (ip)
     usw:
       if (offset_expr.X_add_number >= 0x8000 - off)
 	as_bad (_("operand overflow"));
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
+	{
+	  /* Store the bytes one at a time, rotating each into place.  */
+	  if (target_big_endian)
+	    offset_expr.X_add_number += off;
+	  while (off-- >= 0)
+	    {
+	      macro_build ((char *) NULL, &icnt, &offset_expr, "sb", "t,o(b)",
+			   treg, (int) BFD_RELOC_LO16, breg);
+	      macro_build ((char *) NULL, &icnt, (expressionS *) NULL, "ror",
+			   "d,w,<", treg, treg, 8);
+	      if (target_big_endian)
+		--offset_expr.X_add_number;
+	      else
+		++offset_expr.X_add_number;
+	    }
+	  return;
+	}
       if (! target_big_endian)
 	offset_expr.X_add_number += off;
       macro_build ((char *) NULL, &icnt, &offset_expr, s, "t,o(b)", treg,
@@ -8580,7 +8634,7 @@ macro2 (ip)
 	as_bad (_("operand overflow"));
       macro_build ((char *) NULL, &icnt, (expressionS *) NULL, "mfv", "t,?d0z",
 		   AT, vmreg);
-      if (!CPU_IS_ALLEGREX (mips_arch))
+      if (!(mips_no_ulsw && mips_arch == CPU_ALLEGREX31))
 	{
 	  if (! target_big_endian)
 	    offset_expr.X_add_number += off;
@@ -8640,6 +8694,23 @@ macro2 (ip)
 		     HAVE_32BIT_ADDRESSES ? HAVE_NEWABI
 		     ? "add" : "addu" : "daddu",
 		     "d,v,t", AT, AT, breg);
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
+	{
+	  if (target_big_endian)
+	    offset_expr.X_add_number += off;
+	  while (off-- >= 0)
+	    {
+	      macro_build ((char *) NULL, &icnt, &offset_expr, "sb", "t,o(b)",
+			   treg, (int) BFD_RELOC_LO16, AT);
+	      macro_build ((char *) NULL, &icnt, (expressionS *) NULL, "ror",
+			   "d,w,<", treg, treg, 8);
+	      if (target_big_endian)
+		--offset_expr.X_add_number;
+	      else
+		++offset_expr.X_add_number;
+	    }
+	  break;
+	}
       if (! target_big_endian)
 	expr1.X_add_number = off;
       else
