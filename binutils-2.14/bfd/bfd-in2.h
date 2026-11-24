@@ -1611,6 +1611,9 @@ enum bfd_architecture
 #define bfd_mach_mips12000             12000
 #define bfd_mach_mips16                16
 #define bfd_mach_mips5                 5
+#define bfd_mach_mips_allegrex2        10111420 /* octal 'AL', 20 */
+#define bfd_mach_mips_allegrex3        10111430 /* octal 'AL', 30 */
+#define bfd_mach_mips_allegrex31       10111431 /* octal 'AL', 31 */
 #define bfd_mach_mips_sb1              12310201 /* octal 'SB', 01 */
 #define bfd_mach_mipsisa32             32
 #define bfd_mach_mipsisa32r2           33

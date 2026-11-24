@@ -84,6 +84,10 @@ enum
   I_mipsisa32,
   I_mipsisa32r2,
   I_mipsisa64,
+  I_allegrex,
+  I_allegrex2,
+  I_allegrex3,
+  I_allegrex31,
   I_sb1,
 };
 
@@ -114,6 +118,10 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (32, 32, bfd_mach_mipsisa32,  "mips:isa32",   FALSE, NN(I_mipsisa32)),
   N (32, 32, bfd_mach_mipsisa32r2,"mips:isa32r2", FALSE, NN(I_mipsisa32r2)),
   N (64, 64, bfd_mach_mipsisa64,  "mips:isa64",   FALSE, NN(I_mipsisa64)),
+  N (32, 32, bfd_mach_mips_allegrex31, "mips:allegrex", FALSE, NN(I_allegrex)),
+  N (32, 32, bfd_mach_mips_allegrex2, "mips:allegrex2", FALSE, NN(I_allegrex2)),
+  N (32, 32, bfd_mach_mips_allegrex3, "mips:allegrex3", FALSE, NN(I_allegrex3)),
+  N (32, 32, bfd_mach_mips_allegrex31, "mips:allegrex31", FALSE, NN(I_allegrex31)),
   N (64, 64, bfd_mach_mips_sb1, "mips:sb1",       FALSE, 0),
 };
 

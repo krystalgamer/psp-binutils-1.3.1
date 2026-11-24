@@ -4067,6 +4067,15 @@ _bfd_elf_mips_mach (flags)
     case E_MIPS_MACH_SB1:
       return bfd_mach_mips_sb1;
 
+    case E_MIPS_MACH_ALLEGREX2:
+      return bfd_mach_mips_allegrex2;
+
+    case E_MIPS_MACH_ALLEGREX3:
+      return bfd_mach_mips_allegrex3;
+
+    case E_MIPS_MACH_ALLEGREX31:
+      return bfd_mach_mips_allegrex31;
+
     default:
       switch (flags & EF_MIPS_ARCH)
 	{
@@ -7265,6 +7274,18 @@ mips_set_isa_flags (abfd)
       val = E_MIPS_ARCH_2;
       break;
 
+    case bfd_mach_mips_allegrex2:
+      val = E_MIPS_ARCH_2 | E_MIPS_MACH_ALLEGREX2;
+      break;
+
+    case bfd_mach_mips_allegrex3:
+      val = E_MIPS_ARCH_2 | E_MIPS_MACH_ALLEGREX3;
+      break;
+
+    case bfd_mach_mips_allegrex31:
+      val = E_MIPS_ARCH_2 | E_MIPS_MACH_ALLEGREX31;
+      break;
+
     case bfd_mach_mips4000:
     case bfd_mach_mips4300:
     case bfd_mach_mips4400:
@@ -9115,6 +9136,11 @@ static const struct mips_mach_extension mips_mach_extensions[] = {
 
   /* MIPS32 extensions.  */
   { bfd_mach_mipsisa32r2, bfd_mach_mipsisa32 },
+
+  /* Allegrex extensions.  */
+  { bfd_mach_mips_allegrex31, bfd_mach_mips_allegrex3 },
+  { bfd_mach_mips_allegrex3, bfd_mach_mips_allegrex2 },
+  { bfd_mach_mips_allegrex2, bfd_mach_mips6000 },
 
   /* MIPS II extensions.  */
   { bfd_mach_mips4000, bfd_mach_mips6000 },
