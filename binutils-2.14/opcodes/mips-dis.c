@@ -1015,301 +1015,6 @@ print_insn_args (d, l, pc, info)
 				 (l >> OP_SH_SHAMT) & OP_MASK_SHAMT);
 	  break;
 
-	case '?':
-	  /* VFPU operand; switch for second char.  */
-	  {
-	  int opsnum;
-	  union { unsigned int i; float f; } fval;
-	  int fld_cst, fld_abs, fld_swz, fld_neg;
-
-	  d++;
-	  switch (*d)
-	    {
-	    case 'o':
-	      delta = l & 0xfffc;
-	      if ((delta & 0x8000) != 0)
-		delta |= ~0xffff;
-	      (*info->fprintf_func) (info->stream, "%d", delta);
-	      break;
-
-	    case '0':
-	    case '1':
-	    case '2':
-	    case '3':
-	      {
-		int pos = *d - '0';
-
-		fld_neg = (l >> (16 + pos)) & 0x1;
-		fld_cst = (l >> (12 + pos)) & 0x1;
-		fld_abs = (l >> (8 + pos)) & 0x1;
-		fld_swz = (l >> (0 + pos * 2)) & 0x3;
-
-		if (fld_neg)
-		  (*info->fprintf_func) (info->stream, "-");
-		if (fld_cst)
-		  (*info->fprintf_func) (info->stream, "%s",
-					 pfx_cst_names[(fld_abs << 2)
-						       | fld_swz]);
-		else
-		  {
-		    if (fld_abs)
-		      (*info->fprintf_func) (info->stream, "|");
-		    (*info->fprintf_func) (info->stream, "%s",
-					   pfx_swz_names[fld_swz]);
-		    if (fld_abs)
-		      (*info->fprintf_func) (info->stream, "|");
-		  }
-	      }
-	      break;
-
-	    case '4':
-	    case '5':
-	    case '6':
-	    case '7':
-	      {
-		int pos = *d - '4';
-		int fld_msk = (l >> (8 + pos)) & 0x1;
-		int fld_sat = (l >> (0 + pos * 2)) & 0x3;
-
-		if (fld_msk)
-		  (*info->fprintf_func) (info->stream, "m");
-		else
-		  (*info->fprintf_func) (info->stream, "%s",
-					 pfx_sat_names[fld_sat]);
-	      }
-	      break;
-
-	    case 'a':
-	      {
-		unsigned int cst = (l >> 16) & 0x1f;
-
-		if (cst >= 1 && cst <= 19)
-		  (*info->fprintf_func) (info->stream, "%s",
-					 vfpu_const_names[cst]);
-	      }
-	      break;
-
-	    case 'b':
-	      delta = (l >> 16) & 0x1f;
-	      (*info->fprintf_func) (info->stream, "%d", delta);
-	      break;
-
-	    case 'c':
-	      delta = (l >> 18) & 0x7;
-	      (*info->fprintf_func) (info->stream, "%d", delta);
-	      break;
-
-	    case 'e':
-	      delta = (l >> 16) & 0x7;
-	      (*info->fprintf_func) (info->stream, "%d", delta);
-	      break;
-
-	    case 'f':
-	      (*info->fprintf_func) (info->stream, "%s",
-				     vfpu_cond_names[l & 0xf]);
-	      d++;
-	      break;
-
-	    case 'i':
-	      delta = (l >> 16) & 0xff;
-	      (*info->fprintf_func) (info->stream, "0x%02x", delta);
-	      break;
-
-	    case 'q':
-	      delta = l & 0xff;
-	      (*info->fprintf_func) (info->stream, "$%d", delta);
-	      break;
-
-	    case 'r':
-	      delta = (l >> 8) & 0xff;
-	      (*info->fprintf_func) (info->stream, "$%d", delta);
-	      break;
-
-	    case 'u':
-	      {
-		/* A half-precision float.  */
-		unsigned int val = l & 0xffff;
-		unsigned int exp, mant;
-
-		fval.i = val >> 15;
-		exp = (val >> 10) & 0x1f;
-		mant = l & 0x3ff;
-		if (exp == 0x1f)
-		  {
-		    if (mant == 0)
-		      (*info->fprintf_func) (info->stream, "%cInf",
-					     fval.i ? '-' : '+');
-		    else
-		      (*info->fprintf_func) (info->stream, "%cNaN",
-					     fval.i ? '-' : '+');
-		    break;
-		  }
-		if (exp == 0)
-		  {
-		    if (mant == 0)
-		      {
-			(*info->fprintf_func) (info->stream, "%c0",
-					       fval.i ? '-' : '+');
-			break;
-		      }
-		    do
-		      {
-			mant <<= 1;
-			exp--;
-		      }
-		    while ((mant & 0x400) == 0);
-		    mant &= 0x3ff;
-		  }
-		fval.i <<= 31;
-		fval.i |= (exp + 112) << 23;
-		fval.i |= mant << 13;
-		(*info->fprintf_func) (info->stream, "%g", fval.f);
-	      }
-	      break;
-
-	    case 'w':
-	      {
-		const char *elements[4];
-		int rotators = (l >> 16) & 0x1f;
-		unsigned int opcode = l & 0x8080;
-		int i, sin, cos, neg;
-
-		if (opcode == 0x80)
-		  opsnum = 2;
-		else if (opcode == 0x8000)
-		  opsnum = 3;
-		else
-		  opsnum = (opcode == 0x8080) ? 4 : 0;
-
-		cos = rotators & 0x3;
-		sin = (rotators >> 2) & 0x3;
-		neg = (rotators >> 4) & 0x1;
-
-		if (sin == cos)
-		  {
-		    if (neg)
-		      elements[0] = elements[1] = elements[2] = elements[3]
-			= "-s";
-		    else
-		      elements[0] = elements[1] = elements[2] = elements[3]
-			= "s";
-		  }
-		else
-		  elements[0] = elements[1] = elements[2] = elements[3] = "0";
-
-		if (neg)
-		  elements[sin] = "-s";
-		else
-		  elements[sin] = "s";
-		elements[cos] = "c";
-
-		(*info->fprintf_func) (info->stream, "[");
-		i = 0;
-		for (;;)
-		  {
-		    (*info->fprintf_func) (info->stream, "%s", elements[i]);
-		    i++;
-		    if (i >= opsnum)
-		      break;
-		    (*info->fprintf_func) (info->stream, ",");
-		  }
-		(*info->fprintf_func) (info->stream, "]");
-	      }
-	      break;
-
-	    case 'd':
-	    case 'm':
-	    case 'n':
-	    case 's':
-	    case 't':
-	    case 'v':
-	    case 'x':
-	      {
-		unsigned int vreg = 0;
-
-		switch (*d)
-		  {
-		  case 's':
-		    vreg = (l >> 8) & 0x7f;
-		    /* vmmul transposes its first source matrix.  */
-		    if ((l & 0xff800000) == 0xf0000000)
-		      {
-			if ((vreg & 0x20) != 0)
-			  vreg &= 0x5f;
-			else
-			  vreg |= 0x20;
-		      }
-		    break;
-		  case 'm':
-		    vreg = ((l >> 16) & 0x1f) | ((l & 0x3) << 5);
-		    break;
-		  case 'n':
-		    vreg = ((l >> 16) & 0x1f) | ((l & 0x1) << 5);
-		    break;
-		  case 't':
-		    vreg = (l >> 16) & 0x7f;
-		    break;
-		  case 'd':
-		  case 'v':
-		  case 'x':
-		    vreg = l & 0x7f;
-		    break;
-		  }
-
-		d++;
-		switch (*d)
-		  {
-		  case '0':
-		    (*info->fprintf_func) (info->stream, "%s.s",
-					   vfpu_sreg_names[vreg]);
-		    break;
-		  case '1':
-		    (*info->fprintf_func) (info->stream, "%s.p",
-					   vfpu_vpreg_names[vreg]);
-		    break;
-		  case '2':
-		    (*info->fprintf_func) (info->stream, "%s.t",
-					   vfpu_vtreg_names[vreg]);
-		    break;
-		  case '3':
-		    (*info->fprintf_func) (info->stream, "%s.q",
-					   vfpu_vqreg_names[vreg]);
-		    break;
-		  case '5':
-		    (*info->fprintf_func) (info->stream, "%s.p",
-					   vfpu_mpreg_names[vreg]);
-		    break;
-		  case '6':
-		    (*info->fprintf_func) (info->stream, "%s.t",
-					   vfpu_mtreg_names[vreg]);
-		    break;
-		  case '7':
-		    (*info->fprintf_func) (info->stream, "%s.q",
-					   vfpu_mqreg_names[vreg]);
-		    break;
-		  default:
-		    /* xgettext:c-format */
-		    (*info->fprintf_func) (info->stream,
-					   _("# internal error, undefined vreg modifier(%c)"),
-					   *d);
-		    break;
-		  }
-		/* Skip the register type character.  */
-		d++;
-	      }
-	      break;
-
-	    case 'z':
-	      (*info->fprintf_func) (info->stream, "%s",
-				     vfpu_rwb_names[(l >> 1) & 0x1]);
-	      break;
-
-	    default:
-	      break;
-	    }
-	  }
-	  break;
-
 	case 'c':
 	  (*info->fprintf_func) (info->stream, "0x%x",
 				 (l >> OP_SH_CODE) & OP_MASK_CODE);
@@ -1463,6 +1168,302 @@ print_insn_args (d, l, pc, info)
 	case 'Z':
 	  (*info->fprintf_func) (info->stream, "$v%d",
 				 (l >> OP_SH_FT) & OP_MASK_FT);
+	  break;
+
+	case '?':
+	  /* VFPU operand; switch for second char.  */
+	  {
+	  int opsnum;
+	  union { unsigned int i; float f; } fval;
+	  unsigned int sign;
+	  int fld_cst, fld_abs, fld_swz, fld_neg;
+
+	  d++;
+	  switch (*d)
+	    {
+	    case 'o':
+	      delta = l & 0xfffc;
+	      if ((delta & 0x8000) != 0)
+		delta |= ~0xffff;
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+
+	    case 'd':
+	    case 'm':
+	    case 'n':
+	    case 's':
+	    case 't':
+	    case 'v':
+	    case 'x':
+	      {
+		unsigned int vreg = 0;
+
+		switch (*d)
+		  {
+		  case 's':
+		    vreg = (l >> 8) & 0x7f;
+		    /* vmmul transposes its first source matrix.  */
+		    if ((l & 0xff800000) == 0xf0000000)
+		      {
+			if ((vreg & 0x20) != 0)
+			  vreg &= 0x5f;
+			else
+			  vreg |= 0x20;
+		      }
+		    break;
+		  case 'm':
+		    vreg = ((l >> 16) & 0x1f) | ((l & 0x3) << 5);
+		    break;
+		  case 'n':
+		    vreg = ((l >> 16) & 0x1f) | ((l & 0x1) << 5);
+		    break;
+		  case 't':
+		    vreg = (l >> 16) & 0x7f;
+		    break;
+		  case 'd':
+		  case 'v':
+		  case 'x':
+		    vreg = l & 0x7f;
+		    break;
+		  }
+
+		d++;
+		switch (*d)
+		  {
+		  case '0':
+		    (*info->fprintf_func) (info->stream, "%s.s",
+					   vfpu_sreg_names[vreg]);
+		    break;
+		  case '1':
+		    (*info->fprintf_func) (info->stream, "%s.p",
+					   vfpu_vpreg_names[vreg]);
+		    break;
+		  case '2':
+		    (*info->fprintf_func) (info->stream, "%s.t",
+					   vfpu_vtreg_names[vreg]);
+		    break;
+		  case '3':
+		    (*info->fprintf_func) (info->stream, "%s.q",
+					   vfpu_vqreg_names[vreg]);
+		    break;
+		  case '5':
+		    (*info->fprintf_func) (info->stream, "%s.p",
+					   vfpu_mpreg_names[vreg]);
+		    break;
+		  case '6':
+		    (*info->fprintf_func) (info->stream, "%s.t",
+					   vfpu_mtreg_names[vreg]);
+		    break;
+		  case '7':
+		    (*info->fprintf_func) (info->stream, "%s.q",
+					   vfpu_mqreg_names[vreg]);
+		    break;
+		  default:
+		    /* xgettext:c-format */
+		    (*info->fprintf_func) (info->stream,
+					   _("# internal error, undefined vreg modifier(%c)"),
+					   *d);
+		    break;
+		  }
+		/* Skip the register type character.  */
+		d++;
+	      }
+	      break;
+
+	    case 'f':
+	      (*info->fprintf_func) (info->stream, "%s",
+				     vfpu_cond_names[l & 0xf]);
+	      d++;
+	      break;
+
+	    case 'i':
+	      delta = (l >> 16) & 0xff;
+	      (*info->fprintf_func) (info->stream, "0x%02x", delta);
+	      break;
+
+	    case '4':
+	    case '5':
+	    case '6':
+	    case '7':
+	      {
+		int pos = *d - '4';
+		int fld_msk = (l >> (8 + pos)) & 0x1;
+		int fld_sat = (l >> (0 + pos * 2)) & 0x3;
+
+		if (fld_msk)
+		  (*info->fprintf_func) (info->stream, "m");
+		else
+		  (*info->fprintf_func) (info->stream, "%s",
+					 pfx_sat_names[fld_sat]);
+	      }
+	      break;
+
+	    case '0':
+	    case '1':
+	    case '2':
+	    case '3':
+	      {
+		int pos = *d - '0';
+
+		fld_neg = (l >> (16 + pos)) & 0x1;
+		fld_cst = (l >> (12 + pos)) & 0x1;
+		fld_abs = (l >> (8 + pos)) & 0x1;
+		fld_swz = (l >> (0 + pos * 2)) & 0x3;
+
+		if (fld_neg)
+		  (*info->fprintf_func) (info->stream, "-");
+		if (fld_cst)
+		  (*info->fprintf_func) (info->stream, "%s",
+					 pfx_cst_names[(fld_abs << 2)
+						       | fld_swz]);
+		else
+		  {
+		    if (fld_abs)
+		      (*info->fprintf_func) (info->stream, "|");
+		    (*info->fprintf_func) (info->stream, "%s",
+					   pfx_swz_names[fld_swz]);
+		    if (fld_abs)
+		      (*info->fprintf_func) (info->stream, "|");
+		  }
+	      }
+	      break;
+
+	    case 'a':
+	      {
+		unsigned int cst = (l >> 16) & 0x1f;
+
+		if (cst >= 1 && cst <= 19)
+		  (*info->fprintf_func) (info->stream, "%s",
+					 vfpu_const_names[cst]);
+	      }
+	      break;
+
+	    case 'c':
+	      delta = (l >> 18) & 0x7;
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+
+	    case 'e':
+	      delta = (l >> 16) & 0x7;
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+
+	    case 'b':
+	      delta = (l >> 16) & 0x1f;
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+
+	    case 'q':
+	      delta = l & 0xff;
+	      (*info->fprintf_func) (info->stream, "$%d", delta);
+	      break;
+
+	    case 'r':
+	      delta = (l >> 8) & 0xff;
+	      (*info->fprintf_func) (info->stream, "$%d", delta);
+	      break;
+
+	    case 'u':
+	      {
+		/* A half-precision float.  */
+		unsigned int val = l & 0xffff;
+		unsigned int exp, mant;
+
+		sign = val >> 15;
+		exp = (val >> 10) & 0x1f;
+		mant = l & 0x3ff;
+		if (exp == 0x1f)
+		  {
+		    if (mant == 0)
+		      (*info->fprintf_func) (info->stream, "%cInf",
+					     sign ? '-' : '+');
+		    else
+		      (*info->fprintf_func) (info->stream, "%cNaN",
+					     sign ? '-' : '+');
+		    break;
+		  }
+		if (exp == 0)
+		  {
+		    if (mant == 0)
+		      {
+			(*info->fprintf_func) (info->stream, "%c0",
+					       sign ? '-' : '+');
+			break;
+		      }
+		    do
+		      {
+			mant <<= 1;
+			exp--;
+		      }
+		    while ((mant & 0x400) == 0);
+		    mant &= 0x3ff;
+		  }
+		fval.i = sign << 31;
+		fval.i |= (exp + 112) << 23;
+		fval.i |= mant << 13;
+		(*info->fprintf_func) (info->stream, "%g", fval.f);
+	      }
+	      break;
+
+	    case 'w':
+	      {
+		const char *elements[4];
+		int rotators = (l >> 16) & 0x1f;
+		unsigned int opcode = l & 0x8080;
+		int i, sin, cos, neg;
+
+		if (opcode == 0x80)
+		  opsnum = 2;
+		else if (opcode == 0x8000)
+		  opsnum = 3;
+		else
+		  opsnum = (opcode == 0x8080) ? 4 : 0;
+
+		cos = rotators & 0x3;
+		sin = (rotators >> 2) & 0x3;
+		neg = (rotators >> 4) & 0x1;
+
+		if (sin == cos)
+		  {
+		    if (neg)
+		      elements[0] = elements[1] = elements[2] = elements[3]
+			= "-s";
+		    else
+		      elements[0] = elements[1] = elements[2] = elements[3]
+			= "s";
+		  }
+		else
+		  elements[0] = elements[1] = elements[2] = elements[3] = "0";
+
+		if (neg)
+		  elements[sin] = "-s";
+		else
+		  elements[sin] = "s";
+		elements[cos] = "c";
+
+		(*info->fprintf_func) (info->stream, "[");
+		i = 0;
+		for (;;)
+		  {
+		    (*info->fprintf_func) (info->stream, "%s", elements[i]);
+		    i++;
+		    if (i >= opsnum)
+		      break;
+		    (*info->fprintf_func) (info->stream, ",");
+		  }
+		(*info->fprintf_func) (info->stream, "]");
+	      }
+	      break;
+
+	    case 'z':
+	      (*info->fprintf_func) (info->stream, "%s",
+				     vfpu_rwb_names[(l >> 1) & 0x1]);
+	      break;
+
+	    default:
+	      break;
+	    }
+	  }
 	  break;
 
 	default:
