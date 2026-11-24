@@ -8510,6 +8510,23 @@ macro2 (ip)
 		   vmreg, (int) BFD_RELOC_LO16, breg);
       return;
 
+    case M_ULV_Q_AB:
+      off = 12;
+      used_at = 1;
+      load_address (&icnt, AT, &offset_expr, &used_at);
+      if (breg != 0)
+	macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+		     HAVE_32BIT_ADDRESSES ? HAVE_NEWABI
+		     ? "add" : "addu" : "daddu",
+		     "d,v,t", AT, AT, breg);
+      expr1.X_add_number = off;
+      macro_build ((char *) NULL, &icnt, &expr1, "lvl.q", "?n3x,?o(b)",
+		   vmreg, (int) BFD_RELOC_LO16, AT);
+      expr1.X_add_number = 0;
+      macro_build ((char *) NULL, &icnt, &expr1, "lvr.q", "?n3x,?o(b)",
+		   vmreg, (int) BFD_RELOC_LO16, AT);
+      break;
+
     case M_ULD_A:
       s = "ldl";
       s2 = "ldr";
@@ -8676,6 +8693,23 @@ macro2 (ip)
       macro_build ((char *) NULL, &icnt, &offset_expr, "svr.q", "?n3x,?o(b)",
 		   vmreg, (int) BFD_RELOC_LO16, breg);
       return;
+
+    case M_USV_Q_AB:
+      off = 12;
+      used_at = 1;
+      load_address (&icnt, AT, &offset_expr, &used_at);
+      if (breg != 0)
+	macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+		     HAVE_32BIT_ADDRESSES ? HAVE_NEWABI
+		     ? "add" : "addu" : "daddu",
+		     "d,v,t", AT, AT, breg);
+      expr1.X_add_number = off;
+      macro_build ((char *) NULL, &icnt, &expr1, "svl.q", "?n3x,?o(b)",
+		   vmreg, (int) BFD_RELOC_LO16, AT);
+      expr1.X_add_number = 0;
+      macro_build ((char *) NULL, &icnt, &expr1, "svr.q", "?n3x,?o(b)",
+		   vmreg, (int) BFD_RELOC_LO16, AT);
+      break;
 
     case M_USD_A:
       s = "sdl";
