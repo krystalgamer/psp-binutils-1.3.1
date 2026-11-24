@@ -155,7 +155,7 @@ enum mips_abi_level
 };
 
 /* MIPS ABI we are using for this output file.  */
-static enum mips_abi_level mips_abi = NO_ABI;
+static enum mips_abi_level mips_abi = EABI_ABI;
 
 /* This is the set of options which may be modified by the .set
    pseudo-op.  We use a struct so that .set push and .set pop are more
@@ -203,6 +203,10 @@ struct mips_set_options
      is passed but can changed if the assembler code uses .set mipsN.  */
   int gp32;
   int fp32;
+  /* Non-zero if the Allegrex VFPU instructions may be used; they take
+     the place of coprocessor 2.  Changed by `.set allegrex' and
+     `.set mipsN'.  */
+  int vfpu;
 };
 
 /* True if -mgp32 was passed.  */
@@ -217,7 +221,7 @@ static int file_mips_fp32 = -1;
 
 static struct mips_set_options mips_opts =
 {
-  ISA_UNKNOWN, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0
+  ISA_MIPS2, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 1
 };
 
 /* These variables are filled in with the masks of registers used.
@@ -242,14 +246,14 @@ static int file_ase_mips3d;
 static int file_ase_mdmx;
 
 /* The argument of the -march= flag.  The architecture we are assembling.  */
-static int mips_arch = CPU_UNKNOWN;
-static const char *mips_arch_string;
+static int mips_arch = CPU_ALLEGREX31;
+static const char *mips_arch_string = "allegrex";
 static const struct mips_cpu_info *mips_arch_info;
 
 /* The argument of the -mtune= flag.  The architecture for which we
    are optimizing.  */
-static int mips_tune = CPU_UNKNOWN;
-static const char *mips_tune_string;
+static int mips_tune = CPU_ALLEGREX31;
+static const char *mips_tune_string = "allegrex";
 static const struct mips_cpu_info *mips_tune_info;
 
 /* True when generating 32-bit code for a 64-bit processor.  */
@@ -393,6 +397,14 @@ static int mips_big_got = 0;
    instructions.  */
 static int mips_trap = 0;
 
+/* 1 if unaligned word loads and stores (ulw, usw) should not use
+   lwl/lwr/swl/swr, which the Allegrex lacks.  Set by -mno-ulsw.  */
+static int mips_no_ulsw = 1;
+
+/* 1 if the first source matrix of vmmul is written transposed (as
+   the instruction encodes it).  Set by -vmmul-trans.  */
+static int vfpu_mmul_trans = 1;
+
 /* 1 if double width floating point constants should not be constructed
    by assembling two single width halves into two single width floating
    point registers which just happen to alias the double width destination
@@ -410,7 +422,7 @@ static int mips_any_noreorder;
 static int mips_7000_hilo_fix;
 
 /* The size of the small data section.  */
-static unsigned int g_switch_value = 8;
+static unsigned int g_switch_value = 0;
 /* Whether the -G option was used.  */
 static int g_switch_seen = 0;
 
@@ -9182,6 +9194,16 @@ mips_ip (str, ip)
       *s++ = '\0';
     }
 
+  /* The VFPU takes the place of coprocessor 2.  */
+  if (mips_opts.vfpu && strlen (str) == 4 && str[2] == 'c' && str[3] == '2'
+      && (((str[0] == 'l' || str[0] == 's') && str[1] == 'w')
+	  || ((str[0] == 'm' || str[0] == 'c')
+	      && (str[1] == 'f' || str[1] == 't'))))
+    {
+      insn_error = "opcode not supported on this processor";
+      return;
+    }
+
   insn = (struct mips_opcode *) hash_find (op_hash, str);
 
   /* If we didn't find the instruction in the opcode table, try again, but
@@ -9234,7 +9256,19 @@ mips_ip (str, ip)
 
       if (insn->pinfo != INSN_MACRO)
 	{
-	  if (mips_arch == CPU_R4650 && (insn->pinfo & FP_D) != 0)
+	  if ((mips_arch == CPU_R4650 || CPU_IS_ALLEGREX (mips_arch))
+	      && (insn->pinfo & FP_D) != 0)
+	    ok = FALSE;
+	}
+
+      /* The Allegrex 3.1 has no unaligned load and store word
+	 instructions.  */
+      if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
+	{
+	  if (strcmp (insn->name, "lwl") == 0
+	      || strcmp (insn->name, "lwr") == 0
+	      || strcmp (insn->name, "swl") == 0
+	      || strcmp (insn->name, "swr") == 0)
 	    ok = FALSE;
 	}
 
@@ -12498,8 +12532,16 @@ struct option md_longopts[] =
   {"no-relax-branch", no_argument, NULL, OPTION_NO_RELAX_BRANCH},
 #define OPTION_MIPS32R2 (OPTION_MD_BASE + 41)
   {"mips32r2", no_argument, NULL, OPTION_MIPS32R2},
+#define OPTION_ULSW (OPTION_MD_BASE + 42)
+  {"mulsw", no_argument, NULL, OPTION_ULSW},
+#define OPTION_NO_ULSW (OPTION_MD_BASE + 43)
+  {"mno-ulsw", no_argument, NULL, OPTION_NO_ULSW},
+#define OPTION_VMMUL_TRANS (OPTION_MD_BASE + 44)
+  {"vmmul-trans", no_argument, NULL, OPTION_VMMUL_TRANS},
+#define OPTION_NO_VMMUL_TRANS (OPTION_MD_BASE + 45)
+  {"no-vmmul-trans", no_argument, NULL, OPTION_NO_VMMUL_TRANS},
 #ifdef OBJ_ELF
-#define OPTION_ELF_BASE    (OPTION_MD_BASE + 42)
+#define OPTION_ELF_BASE    (OPTION_MD_BASE + 46)
 #define OPTION_CALL_SHARED (OPTION_ELF_BASE + 0)
   {"KPIC",        no_argument, NULL, OPTION_CALL_SHARED},
   {"call_shared", no_argument, NULL, OPTION_CALL_SHARED},
@@ -12622,6 +12664,22 @@ md_parse_option (c, arg)
 
     case OPTION_MIPS32R2:
       file_mips_isa = ISA_MIPS32R2;
+      break;
+
+    case OPTION_ULSW:
+      mips_no_ulsw = 0;
+      break;
+
+    case OPTION_NO_ULSW:
+      mips_no_ulsw = 1;
+      break;
+
+    case OPTION_VMMUL_TRANS:
+      vfpu_mmul_trans = 1;
+      break;
+
+    case OPTION_NO_VMMUL_TRANS:
+      vfpu_mmul_trans = 0;
       break;
 
     case OPTION_MIPS64:
@@ -14289,6 +14347,15 @@ s_mipsset (x)
 	  mips_opts.gp32 = file_mips_gp32;
 	  mips_opts.fp32 = file_mips_fp32;
 	}
+      mips_opts.vfpu = reset && mips_arch == CPU_ALLEGREX31;
+    }
+  else if (strcmp (name, "allegrex") == 0
+	   || strcmp (name, "allegrex31") == 0)
+    {
+      mips_opts.vfpu = 1;
+      mips_opts.isa = ISA_MIPS2;
+      mips_opts.gp32 = 1;
+      mips_opts.fp32 = 1;
     }
   else if (strcmp (name, "autoextend") == 0)
     mips_opts.noautoextend = 0;
