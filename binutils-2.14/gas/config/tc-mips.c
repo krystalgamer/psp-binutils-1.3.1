@@ -9262,7 +9262,7 @@ mips_ip (str, ip)
   char c = 0;
   struct mips_opcode *insn;
   char *argsStart;
-  unsigned int regno = 0;
+  unsigned int regno;
   unsigned int lastregno = 0;
   unsigned int lastpos = 0;
   unsigned int limlo, limhi;
@@ -9995,7 +9995,7 @@ mips_ip (str, ip)
 		  switch (*args++)
 		    {
 		    case 's':
-		      if (
+		      if (vfpu_mmul_trans &&
 			  (ip->insn_opcode
 			      & VFPU_MASK_RPT_MMUL) == VFPU_INST_RPT_MMUL)
 			{
