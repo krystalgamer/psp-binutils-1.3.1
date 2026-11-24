@@ -80,7 +80,7 @@ int ld_canon_sysroot_len;
 bfd *output_bfd = 0;
 
 /* Set by -G argument, for MIPS ECOFF target.  */
-int g_switch_value = 8;
+int g_switch_value = 0;
 
 /* Nonzero means print names of input files as processed.  */
 bfd_boolean trace_files;
