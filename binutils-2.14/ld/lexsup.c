@@ -1194,6 +1194,22 @@ parse_args (argc, argv)
   if (ingroup)
     lang_leave_group ();
 
+  /* Search the PSP SDK's library directory first.  */
+  {
+    char *sdk_home;
+
+    sdk_home = getenv ("SCE_PSP_SDK_HOME");
+    if (sdk_home != NULL)
+      {
+	char *sdk_lib = xmalloc (strlen (sdk_home) + 8);
+	strcpy (sdk_lib, sdk_home);
+	strcat (sdk_lib, "/lib");
+	set_default_dirlist (sdk_lib);
+      }
+    else
+      set_default_dirlist ("/usr/local/psp/devkit/lib");
+  }
+
   if (default_dirlist != NULL)
     {
       set_default_dirlist (default_dirlist);

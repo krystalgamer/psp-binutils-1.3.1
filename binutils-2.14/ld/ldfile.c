@@ -481,8 +481,26 @@ ldfile_find_command_file (name, extend)
   search_dirs_type *search;
   FILE *result;
   char buffer[1000];
+  char *sdk_lib;
 
-  /* First try raw name.  */
+  /* First try the PSP SDK's library directory.  */
+  sdk_lib = getenv ("SCE_PSP_SDK_HOME");
+  if (sdk_lib != NULL)
+    {
+      char *p = xmalloc (strlen (sdk_lib) + 8);
+      strcpy (p, sdk_lib);
+      strcat (p, "/lib");
+      sdk_lib = p;
+    }
+  else
+    sdk_lib = "/usr/local/psp/devkit/lib";
+
+  sprintf (buffer, "%s%s%s", sdk_lib, slash, name);
+  result = try_open (buffer, extend);
+  if (result)
+    return result;
+
+  /* Then try raw name.  */
   result = try_open (name, "");
   if (result == (FILE *) NULL)
     {

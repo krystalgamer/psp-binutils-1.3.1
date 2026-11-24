@@ -5178,7 +5178,13 @@ fi
 
 
 
-EMULATION_LIBPATH=$all_libpath
+case "${target}" in
+  mipspspel-*)
+    # The PSP linker reads its scripts from the SDK (see ldfile.c).
+    EMULATION_LIBPATH= ;;
+  *)
+    EMULATION_LIBPATH=$all_libpath ;;
+esac
 
 
 if test x${enable_static} = xno; then
