@@ -8413,8 +8413,7 @@ macro2 (ip)
       if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	{
 	  /* Without lwl and lwr, load the bytes one at a time, the most
-	     significant first, shifting each one in.  The address register
-	     must not be overwritten before the last load.  */
+	     significant first, shifting each one in.  */
 	  if (treg == breg)
 	    as_bad (_("opcode not supported on this processor"));
 	  if (! target_big_endian)
@@ -8459,8 +8458,6 @@ macro2 (ip)
       break;
 
     case M_ULV_S:
-      /* ulv.s needs lwl and lwr, which the Allegrex 3.1 lacks unless
-	 -mulsw is given.  */
       if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	as_bad (_("opcode not supported on this processor"));
       off = 3;
@@ -8494,8 +8491,6 @@ macro2 (ip)
       return;
 
     case M_ULV_Q_AB:
-      /* Load the address into $at, then use lvl.q and lvr.q relative
-	 to it.  */
       off = 12;
       used_at = 1;
       load_address (&icnt, AT, &offset_expr, &used_at);
@@ -8602,9 +8597,8 @@ macro2 (ip)
 	as_bad (_("operand overflow"));
       if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	{
-	  /* Without swl and swr, store the bytes one at a time, the least
-	     significant first, rotating the register so that each one is
-	     in place; four rotations leave it as it was.  */
+	  /* Without swl and swr, store the bytes one at a time, rotating
+	     each into place; four rotations leave the register as it was.  */
 	  if (target_big_endian)
 	    offset_expr.X_add_number += off;
 	  while (off-- >= 0)
@@ -8638,7 +8632,6 @@ macro2 (ip)
 	as_bad (_("operand overflow"));
       macro_build ((char *) NULL, &icnt, (expressionS *) NULL, "mfv", "t,?d0z",
 		   AT, vmreg);
-      /* usv.s stores the word with swl and swr if it may.  */
       if (!(mips_no_ulsw && mips_arch == CPU_ALLEGREX31))
 	{
 	  if (! target_big_endian)
@@ -8683,7 +8676,6 @@ macro2 (ip)
       return;
 
     case M_USV_Q_AB:
-      /* As for ulv.q, with svl.q and svr.q.  */
       off = 12;
       used_at = 1;
       load_address (&icnt, AT, &offset_expr, &used_at);
@@ -8719,7 +8711,6 @@ macro2 (ip)
 		     "d,v,t", AT, AT, breg);
       if (mips_no_ulsw && mips_arch == CPU_ALLEGREX31)
 	{
-	  /* As for usw, relative to the address in $at.  */
 	  if (target_big_endian)
 	    offset_expr.X_add_number += off;
 	  while (off-- >= 0)
@@ -9136,7 +9127,16 @@ validate_mips_insn (opc)
       case '[': break;
       case ']': break;
 
-      /* VFPU fields */
+      /* VFPU fields: '?' followed by
+	   o	     14-bit word offset of the VFPU loads and stores
+	   0-3, 4-7  source/target and destination prefix fields
+	   a-i, q-z  constants, immediates, conditions and control registers
+	   d,s,t,m,n,v,x  a VFPU register, followed by its size
+		     (0-3 vector, 5-7 matrix) and a register type letter
+	   [, ]	     the brackets of vrot and prefix operands
+	   ?y	     an element of an lvi or lvhi list
+	 The register type letters are checked by mips_ip against the
+	 registers already used by the instruction.  */
       case '?':
 	switch (c = *p++)
 	  {
