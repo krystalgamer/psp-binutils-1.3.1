@@ -16569,6 +16569,19 @@ s_mips_end (x)
 
       subseg_set (saved_seg, saved_subseg);
     }
+
+  /* Set the size of the function symbol.  */
+  if (p != NULL && ! ECOFF_DEBUGGING)
+    {
+      expressionS *exp;
+
+      exp = (expressionS *) xmalloc (sizeof (expressionS));
+      exp->X_op = O_subtract;
+      exp->X_add_symbol = expr_build_dot ();
+      exp->X_op_symbol = p;
+      exp->X_add_number = 0;
+      symbol_get_obj (p)->size = exp;
+    }
 #endif /* OBJ_ELF */
 
   cur_proc_ptr = NULL;
