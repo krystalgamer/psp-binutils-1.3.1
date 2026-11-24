@@ -358,6 +358,7 @@ static int mips_32bitmode = 0;
 #define hilo_interlocks (mips_arch == CPU_R4010                       \
                          || mips_arch == CPU_VR5500                   \
                          || mips_arch == CPU_SB1                      \
+                         || CPU_IS_ALLEGREX (mips_arch)               \
                          )
 
 /* Whether the processor uses hardware interlocks to protect reads
@@ -373,7 +374,6 @@ static int mips_32bitmode = 0;
 /* Itbl support may require additional care here.  */
 #define cop_interlocks (mips_arch == CPU_R4300                        \
                         || mips_arch == CPU_VR5400                    \
-   || CPU_IS_ALLEGREX (mips_arch)                 \
                         || mips_arch == CPU_VR5500                    \
                         || mips_arch == CPU_SB1                       \
 			)
@@ -1494,7 +1494,7 @@ md_assemble (str)
      instruction it prefixes.  Note that in mips_ip prefix operands do not
      cause any side effects with imm_expr or offset_expr.  If they did
      we'd have to save and restore them here.  */
-  if (CPU_IS_ALLEGREX (mips_arch) && ((vfpu_dprefix || vfpu_sprefix || vfpu_tprefix)))
+  if (vfpu_dprefix || vfpu_sprefix || vfpu_tprefix)
     {
 
       if (mips_opts.noreorder
