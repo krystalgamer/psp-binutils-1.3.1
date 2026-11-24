@@ -140,6 +140,142 @@ static const char * const mips_cp0_names_mips3264[32] = {
   "c0_taglo",     "c0_taghi",     "c0_errorepc",  "c0_desave",
 };
 
+/* VFPU registers: single, pair, triple and quad vectors and 2x2, 3x3
+   and 4x4 matrices, by their 7-bit register number.  */
+
+static const char * const vfpu_sreg_names[128] = {
+  "S000", "S010", "S020", "S030", "S100", "S110", "S120", "S130",
+  "S200", "S210", "S220", "S230", "S300", "S310", "S320", "S330",
+  "S400", "S410", "S420", "S430", "S500", "S510", "S520", "S530",
+  "S600", "S610", "S620", "S630", "S700", "S710", "S720", "S730",
+  "S001", "S011", "S021", "S031", "S101", "S111", "S121", "S131",
+  "S201", "S211", "S221", "S231", "S301", "S311", "S321", "S331",
+  "S401", "S411", "S421", "S431", "S501", "S511", "S521", "S531",
+  "S601", "S611", "S621", "S631", "S701", "S711", "S721", "S731",
+  "S002", "S012", "S022", "S032", "S102", "S112", "S122", "S132",
+  "S202", "S212", "S222", "S232", "S302", "S312", "S322", "S332",
+  "S402", "S412", "S422", "S432", "S502", "S512", "S522", "S532",
+  "S602", "S612", "S622", "S632", "S702", "S712", "S722", "S732",
+  "S003", "S013", "S023", "S033", "S103", "S113", "S123", "S133",
+  "S203", "S213", "S223", "S233", "S303", "S313", "S323", "S333",
+  "S403", "S413", "S423", "S433", "S503", "S513", "S523", "S533",
+  "S603", "S613", "S623", "S633", "S703", "S713", "S723", "S733"
+};
+
+static const char * const vfpu_vpreg_names[128] = {
+  "C000", "C010", "C020", "C030", "C100", "C110", "C120", "C130",
+  "C200", "C210", "C220", "C230", "C300", "C310", "C320", "C330",
+  "C400", "C410", "C420", "C430", "C500", "C510", "C520", "C530",
+  "C600", "C610", "C620", "C630", "C700", "C710", "C720", "C730",
+  "R000", "R001", "R002", "R003", "R100", "R101", "R102", "R103",
+  "R200", "R201", "R202", "R203", "R300", "R301", "R302", "R303",
+  "R400", "R401", "R402", "R403", "R500", "R501", "R502", "R503",
+  "R600", "R601", "R602", "R603", "R700", "R701", "R702", "R703",
+  "C002", "C012", "C022", "C032", "C102", "C112", "C122", "C132",
+  "C202", "C212", "C222", "C232", "C302", "C312", "C322", "C332",
+  "C402", "C412", "C422", "C432", "C502", "C512", "C522", "C532",
+  "C602", "C612", "C622", "C632", "C702", "C712", "C722", "C732",
+  "R020", "R021", "R022", "R023", "R120", "R121", "R122", "R123",
+  "R220", "R221", "R222", "R223", "R320", "R321", "R322", "R323",
+  "R420", "R421", "R422", "R423", "R520", "R521", "R522", "R523",
+  "R620", "R621", "R622", "R623", "R720", "R721", "R722", "R723"
+};
+
+static const char * const vfpu_vtreg_names[128] = {
+  "C000", "C010", "C020", "C030", "C100", "C110", "C120", "C130",
+  "C200", "C210", "C220", "C230", "C300", "C310", "C320", "C330",
+  "C400", "C410", "C420", "C430", "C500", "C510", "C520", "C530",
+  "C600", "C610", "C620", "C630", "C700", "C710", "C720", "C730",
+  "R000", "R001", "R002", "R003", "R100", "R101", "R102", "R103",
+  "R200", "R201", "R202", "R203", "R300", "R301", "R302", "R303",
+  "R400", "R401", "R402", "R403", "R500", "R501", "R502", "R503",
+  "R600", "R601", "R602", "R603", "R700", "R701", "R702", "R703",
+  "C001", "C011", "C021", "C031", "C101", "C111", "C121", "C131",
+  "C201", "C211", "C221", "C231", "C301", "C311", "C321", "C331",
+  "C401", "C411", "C421", "C431", "C501", "C511", "C521", "C531",
+  "C601", "C611", "C621", "C631", "C701", "C711", "C721", "C731",
+  "R010", "R011", "R012", "R013", "R110", "R111", "R112", "R113",
+  "R210", "R211", "R212", "R213", "R310", "R311", "R312", "R313",
+  "R410", "R411", "R412", "R413", "R510", "R511", "R512", "R513",
+  "R610", "R611", "R612", "R613", "R710", "R711", "R712", "R713"
+};
+
+static const char * const vfpu_vqreg_names[128] = {
+  "C000", "C010", "C020", "C030", "C100", "C110", "C120", "C130",
+  "C200", "C210", "C220", "C230", "C300", "C310", "C320", "C330",
+  "C400", "C410", "C420", "C430", "C500", "C510", "C520", "C530",
+  "C600", "C610", "C620", "C630", "C700", "C710", "C720", "C730",
+  "R000", "R001", "R002", "R003", "R100", "R101", "R102", "R103",
+  "R200", "R201", "R202", "R203", "R300", "R301", "R302", "R303",
+  "R400", "R401", "R402", "R403", "R500", "R501", "R502", "R503",
+  "R600", "R601", "R602", "R603", "R700", "R701", "R702", "R703",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", ""
+};
+
+static const char * const vfpu_mpreg_names[128] = {
+  "M000", "", "M020", "", "M100", "", "M120", "",
+  "M200", "", "M220", "", "M300", "", "M320", "",
+  "M400", "", "M420", "", "M500", "", "M520", "",
+  "M600", "", "M620", "", "M700", "", "M720", "",
+  "E000", "", "E002", "", "E100", "", "E102", "",
+  "E200", "", "E202", "", "E300", "", "E302", "",
+  "E400", "", "E402", "", "E500", "", "E502", "",
+  "E600", "", "E602", "", "E700", "", "E702", "",
+  "M002", "", "M022", "", "M102", "", "M122", "",
+  "M202", "", "M222", "", "M302", "", "M322", "",
+  "M402", "", "M422", "", "M502", "", "M522", "",
+  "M602", "", "M622", "", "M702", "", "M722", "",
+  "E020", "", "E022", "", "E120", "", "E122", "",
+  "E220", "", "E222", "", "E320", "", "E322", "",
+  "E420", "", "E422", "", "E520", "", "E522", "",
+  "E620", "", "E622", "", "E720", "", "E722", ""
+};
+
+static const char * const vfpu_mtreg_names[128] = {
+  "M000", "M010", "", "", "M100", "M110", "", "",
+  "M200", "M210", "", "", "M300", "M310", "", "",
+  "M400", "M410", "", "", "M500", "M510", "", "",
+  "M600", "M610", "", "", "M700", "M710", "", "",
+  "E000", "E001", "", "", "E100", "E101", "", "",
+  "E200", "E201", "", "", "E300", "E301", "", "",
+  "E400", "E401", "", "", "E500", "E501", "", "",
+  "E600", "E601", "", "", "E700", "E701", "", "",
+  "M001", "M011", "", "", "M101", "M111", "", "",
+  "M201", "M211", "", "", "M301", "M311", "", "",
+  "M401", "M411", "", "", "M501", "M511", "", "",
+  "M601", "M611", "", "", "M701", "M711", "", "",
+  "E010", "E011", "", "", "E110", "E111", "", "",
+  "E210", "E211", "", "", "E310", "E311", "", "",
+  "E410", "E411", "", "", "E510", "E511", "", "",
+  "E610", "E611", "", "", "E710", "E711", "", ""
+};
+
+static const char * const vfpu_mqreg_names[128] = {
+  "M000", "", "", "", "M100", "", "", "",
+  "M200", "", "", "", "M300", "", "", "",
+  "M400", "", "", "", "M500", "", "", "",
+  "M600", "", "", "", "M700", "", "", "",
+  "E000", "", "", "", "E100", "", "", "",
+  "E200", "", "", "", "E300", "", "", "",
+  "E400", "", "", "", "E500", "", "", "",
+  "E600", "", "", "", "E700", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", ""
+};
+
 static const struct mips_cp0sel_name mips_cp0sel_names_mips3264[] = {
   { 16, 1, "c0_config1"		},
   { 16, 2, "c0_config2"		},
@@ -354,6 +490,14 @@ const struct mips_arch_choice mips_arch_choices[] = {
   { "r12000",	1, bfd_mach_mips12000, CPU_R12000, ISA_MIPS4,
     mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
   { "mips5",	1, bfd_mach_mips5, CPU_MIPS5, ISA_MIPS5,
+    mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
+  { "allegrex",	1, bfd_mach_mips_allegrex31, CPU_ALLEGREX31, ISA_MIPS2,
+    mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
+  { "allegrex2",	1, bfd_mach_mips_allegrex2, CPU_ALLEGREX2, ISA_MIPS2,
+    mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
+  { "allegrex3",	1, bfd_mach_mips_allegrex3, CPU_ALLEGREX3, ISA_MIPS2,
+    mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
+  { "allegrex31",	1, bfd_mach_mips_allegrex31, CPU_ALLEGREX31, ISA_MIPS2,
     mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
 
   /* For stock MIPS32, disassemble all applicable MIPS-specified ASEs.
@@ -671,6 +815,38 @@ print_insn_args (d, l, pc, info)
      bfd_vma pc;
      struct disassemble_info *info;
 {
+  static const char * const vfpu_cond_names[] = {
+    "FL", "EQ", "LT", "LE", "TR", "NE", "GE", "GT",
+    "EZ", "EN", "EI", "ES", "NZ", "NN", "NI", "NS"
+  };
+  static const char * const vfpu_const_names[] = {
+    "",
+    "VFPU_HUGE",
+    "VFPU_SQRT2",
+    "VFPU_SQRT1_2",
+    "VFPU_2_SQRTPI",
+    "VFPU_2_PI",
+    "VFPU_1_PI",
+    "VFPU_PI_4",
+    "VFPU_PI_2",
+    "VFPU_PI",
+    "VFPU_E",
+    "VFPU_LOG2E",
+    "VFPU_LOG10E",
+    "VFPU_LN2",
+    "VFPU_LN10",
+    "VFPU_2PI",
+    "VFPU_PI_6",
+    "VFPU_LOG10TWO",
+    "VFPU_LOG2TEN",
+    "VFPU_SQRT3_2"
+  };
+  static const char * const vfpu_rwb_names[] = { "wt", "wb" };
+  static const char * const pfx_cst_names[] = {
+    "0", "1", "2", "1/2", "3", "1/3", "1/4", "1/6"
+  };
+  static const char * const pfx_swz_names[] = { "x", "y", "z", "w" };
+  static const char * const pfx_sat_names[] = { "", "[0:1]", "", "[-1:1]" };
   int op, delta;
   unsigned int lsb, msb, msbd;
 
@@ -837,6 +1013,301 @@ print_insn_args (d, l, pc, info)
 	case '<':
 	  (*info->fprintf_func) (info->stream, "0x%x",
 				 (l >> OP_SH_SHAMT) & OP_MASK_SHAMT);
+	  break;
+
+	case '?':
+	  /* VFPU operand; switch for second char.  */
+	  {
+	  int opsnum;
+	  union { unsigned int i; float f; } fval;
+	  int fld_cst, fld_abs, fld_swz, fld_neg;
+
+	  d++;
+	  switch (*d)
+	    {
+	    case 'o':
+	      delta = l & 0xfffc;
+	      if ((delta & 0x8000) != 0)
+		delta |= ~0xffff;
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+
+	    case '0':
+	    case '1':
+	    case '2':
+	    case '3':
+	      {
+		int pos = *d - '0';
+
+		fld_neg = (l >> (16 + pos)) & 0x1;
+		fld_cst = (l >> (12 + pos)) & 0x1;
+		fld_abs = (l >> (8 + pos)) & 0x1;
+		fld_swz = (l >> (0 + pos * 2)) & 0x3;
+
+		if (fld_neg)
+		  (*info->fprintf_func) (info->stream, "-");
+		if (fld_cst)
+		  (*info->fprintf_func) (info->stream, "%s",
+					 pfx_cst_names[(fld_abs << 2)
+						       | fld_swz]);
+		else
+		  {
+		    if (fld_abs)
+		      (*info->fprintf_func) (info->stream, "|");
+		    (*info->fprintf_func) (info->stream, "%s",
+					   pfx_swz_names[fld_swz]);
+		    if (fld_abs)
+		      (*info->fprintf_func) (info->stream, "|");
+		  }
+	      }
+	      break;
+
+	    case '4':
+	    case '5':
+	    case '6':
+	    case '7':
+	      {
+		int pos = *d - '4';
+		int fld_msk = (l >> (8 + pos)) & 0x1;
+		int fld_sat = (l >> (0 + pos * 2)) & 0x3;
+
+		if (fld_msk)
+		  (*info->fprintf_func) (info->stream, "m");
+		else
+		  (*info->fprintf_func) (info->stream, "%s",
+					 pfx_sat_names[fld_sat]);
+	      }
+	      break;
+
+	    case 'a':
+	      {
+		unsigned int cst = (l >> 16) & 0x1f;
+
+		if (cst >= 1 && cst <= 19)
+		  (*info->fprintf_func) (info->stream, "%s",
+					 vfpu_const_names[cst]);
+	      }
+	      break;
+
+	    case 'b':
+	      delta = (l >> 16) & 0x1f;
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+
+	    case 'c':
+	      delta = (l >> 18) & 0x7;
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+
+	    case 'e':
+	      delta = (l >> 16) & 0x7;
+	      (*info->fprintf_func) (info->stream, "%d", delta);
+	      break;
+
+	    case 'f':
+	      (*info->fprintf_func) (info->stream, "%s",
+				     vfpu_cond_names[l & 0xf]);
+	      d++;
+	      break;
+
+	    case 'i':
+	      delta = (l >> 16) & 0xff;
+	      (*info->fprintf_func) (info->stream, "0x%02x", delta);
+	      break;
+
+	    case 'q':
+	      delta = l & 0xff;
+	      (*info->fprintf_func) (info->stream, "$%d", delta);
+	      break;
+
+	    case 'r':
+	      delta = (l >> 8) & 0xff;
+	      (*info->fprintf_func) (info->stream, "$%d", delta);
+	      break;
+
+	    case 'u':
+	      {
+		/* A half-precision float.  */
+		unsigned int val = l & 0xffff;
+		unsigned int exp, mant;
+
+		fval.i = val >> 15;
+		exp = (val >> 10) & 0x1f;
+		mant = l & 0x3ff;
+		if (exp == 0x1f)
+		  {
+		    if (mant == 0)
+		      (*info->fprintf_func) (info->stream, "%cInf",
+					     fval.i ? '-' : '+');
+		    else
+		      (*info->fprintf_func) (info->stream, "%cNaN",
+					     fval.i ? '-' : '+');
+		    break;
+		  }
+		if (exp == 0)
+		  {
+		    if (mant == 0)
+		      {
+			(*info->fprintf_func) (info->stream, "%c0",
+					       fval.i ? '-' : '+');
+			break;
+		      }
+		    do
+		      {
+			mant <<= 1;
+			exp--;
+		      }
+		    while ((mant & 0x400) == 0);
+		    mant &= 0x3ff;
+		  }
+		fval.i <<= 31;
+		fval.i |= (exp + 112) << 23;
+		fval.i |= mant << 13;
+		(*info->fprintf_func) (info->stream, "%g", fval.f);
+	      }
+	      break;
+
+	    case 'w':
+	      {
+		const char *elements[4];
+		int rotators = (l >> 16) & 0x1f;
+		unsigned int opcode = l & 0x8080;
+		int i, sin, cos, neg;
+
+		if (opcode == 0x80)
+		  opsnum = 2;
+		else if (opcode == 0x8000)
+		  opsnum = 3;
+		else
+		  opsnum = (opcode == 0x8080) ? 4 : 0;
+
+		cos = rotators & 0x3;
+		sin = (rotators >> 2) & 0x3;
+		neg = (rotators >> 4) & 0x1;
+
+		if (sin == cos)
+		  {
+		    if (neg)
+		      elements[0] = elements[1] = elements[2] = elements[3]
+			= "-s";
+		    else
+		      elements[0] = elements[1] = elements[2] = elements[3]
+			= "s";
+		  }
+		else
+		  elements[0] = elements[1] = elements[2] = elements[3] = "0";
+
+		if (neg)
+		  elements[sin] = "-s";
+		else
+		  elements[sin] = "s";
+		elements[cos] = "c";
+
+		(*info->fprintf_func) (info->stream, "[");
+		i = 0;
+		for (;;)
+		  {
+		    (*info->fprintf_func) (info->stream, "%s", elements[i]);
+		    i++;
+		    if (i >= opsnum)
+		      break;
+		    (*info->fprintf_func) (info->stream, ",");
+		  }
+		(*info->fprintf_func) (info->stream, "]");
+	      }
+	      break;
+
+	    case 'd':
+	    case 'm':
+	    case 'n':
+	    case 's':
+	    case 't':
+	    case 'v':
+	    case 'x':
+	      {
+		unsigned int vreg = 0;
+
+		switch (*d)
+		  {
+		  case 's':
+		    vreg = (l >> 8) & 0x7f;
+		    /* vmmul transposes its first source matrix.  */
+		    if ((l & 0xff800000) == 0xf0000000)
+		      {
+			if ((vreg & 0x20) != 0)
+			  vreg &= 0x5f;
+			else
+			  vreg |= 0x20;
+		      }
+		    break;
+		  case 'm':
+		    vreg = ((l >> 16) & 0x1f) | ((l & 0x3) << 5);
+		    break;
+		  case 'n':
+		    vreg = ((l >> 16) & 0x1f) | ((l & 0x1) << 5);
+		    break;
+		  case 't':
+		    vreg = (l >> 16) & 0x7f;
+		    break;
+		  case 'd':
+		  case 'v':
+		  case 'x':
+		    vreg = l & 0x7f;
+		    break;
+		  }
+
+		d++;
+		switch (*d)
+		  {
+		  case '0':
+		    (*info->fprintf_func) (info->stream, "%s.s",
+					   vfpu_sreg_names[vreg]);
+		    break;
+		  case '1':
+		    (*info->fprintf_func) (info->stream, "%s.p",
+					   vfpu_vpreg_names[vreg]);
+		    break;
+		  case '2':
+		    (*info->fprintf_func) (info->stream, "%s.t",
+					   vfpu_vtreg_names[vreg]);
+		    break;
+		  case '3':
+		    (*info->fprintf_func) (info->stream, "%s.q",
+					   vfpu_vqreg_names[vreg]);
+		    break;
+		  case '5':
+		    (*info->fprintf_func) (info->stream, "%s.p",
+					   vfpu_mpreg_names[vreg]);
+		    break;
+		  case '6':
+		    (*info->fprintf_func) (info->stream, "%s.t",
+					   vfpu_mtreg_names[vreg]);
+		    break;
+		  case '7':
+		    (*info->fprintf_func) (info->stream, "%s.q",
+					   vfpu_mqreg_names[vreg]);
+		    break;
+		  default:
+		    /* xgettext:c-format */
+		    (*info->fprintf_func) (info->stream,
+					   _("# internal error, undefined vreg modifier(%c)"),
+					   *d);
+		    break;
+		  }
+		/* Skip the register type character.  */
+		d++;
+	      }
+	      break;
+
+	    case 'z':
+	      (*info->fprintf_func) (info->stream, "%s",
+				     vfpu_rwb_names[(l >> 1) & 0x1]);
+	      break;
+
+	    default:
+	      break;
+	    }
+	  }
 	  break;
 
 	case 'c':
