@@ -349,7 +349,7 @@ static int mips_32bitmode = 0;
 #define CPU_HAS_DROR(CPU)	((CPU) == CPU_VR5400 || (CPU) == CPU_VR5500)
 
 /* True if CPU has a ror instruction.  */
-#define CPU_HAS_ROR(CPU)	CPU_HAS_DROR (CPU) || CPU_IS_ALLEGREX (CPU)
+#define CPU_HAS_ROR(CPU)	(CPU_HAS_DROR (CPU) || (CPU) == CPU_ALLEGREX31)
 
 /* Whether the processor uses hardware interlocks to protect
    reads from the HI and LO registers, and thus does not
@@ -3116,7 +3116,8 @@ macro_build (place, counter, ep, name, fmt, va_alist)
   			       (mips_opts.isa
 	      		        | (file_ase_mips16 ? INSN_MIPS16 : 0)),
 			       mips_arch)
-	  && (mips_arch != CPU_R4650 || (insn.insn_mo->pinfo & FP_D) == 0))
+	  && ((mips_arch != CPU_R4650 && ! CPU_IS_ALLEGREX (mips_arch))
+	      || (insn.insn_mo->pinfo & FP_D) == 0))
 	break;
 
       ++insn.insn_mo;
@@ -6174,7 +6175,7 @@ macro (ip)
       lr = 1;
       goto ld;
     case M_LDC1_AB:
-      if (mips_arch == CPU_R4650)
+      if (mips_arch == CPU_R4650 || CPU_IS_ALLEGREX (mips_arch))
 	{
 	  as_bad (_("opcode not supported on this processor"));
 	  return;
@@ -6290,7 +6291,7 @@ macro (ip)
       s = "scd";
       goto st;
     case M_SDC1_AB:
-      if (mips_arch == CPU_R4650)
+      if (mips_arch == CPU_R4650 || CPU_IS_ALLEGREX (mips_arch))
 	{
 	  as_bad (_("opcode not supported on this processor"));
 	  return;
@@ -7142,7 +7143,7 @@ macro (ip)
 	}
 
     case M_L_DOB:
-      if (mips_arch == CPU_R4650)
+      if (mips_arch == CPU_R4650 || CPU_IS_ALLEGREX (mips_arch))
 	{
 	  as_bad (_("opcode not supported on this processor"));
 	  return;
@@ -7183,7 +7184,7 @@ macro (ip)
        * But, the resulting address is the same after relocation so why
        * generate the extra instruction?
        */
-      if (mips_arch == CPU_R4650)
+      if (mips_arch == CPU_R4650 || CPU_IS_ALLEGREX (mips_arch))
 	{
 	  as_bad (_("opcode not supported on this processor"));
 	  return;
@@ -7201,7 +7202,7 @@ macro (ip)
       goto ldd_std;
 
     case M_S_DAB:
-      if (mips_arch == CPU_R4650)
+      if (mips_arch == CPU_R4650 || CPU_IS_ALLEGREX (mips_arch))
 	{
 	  as_bad (_("opcode not supported on this processor"));
 	  return;
@@ -8044,7 +8045,7 @@ macro2 (ip)
       break;
 
     case M_S_DOB:
-      if (mips_arch == CPU_R4650)
+      if (mips_arch == CPU_R4650 || CPU_IS_ALLEGREX (mips_arch))
 	{
 	  as_bad (_("opcode not supported on this processor"));
 	  return;
