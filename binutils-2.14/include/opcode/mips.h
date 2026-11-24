@@ -418,6 +418,12 @@ struct mips_opcode
 #define INSN_5400		  0x01000000
 /* NEC VR5500 instruction.  */
 #define INSN_5500		  0x02000000
+/* Sony Allegrex 2.0 instruction.  */
+#define INSN_ALLEGREX2		  0x04000000
+/* Sony Allegrex 3.0 instruction.  */
+#define INSN_ALLEGREX3		  0x08000000
+/* Sony Allegrex 3.1 instruction, including the VFPU.  */
+#define INSN_ALLEGREX31		  0x10000000
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -460,6 +466,9 @@ struct mips_opcode
 #define CPU_MIPS5       5
 #define CPU_MIPS64      64
 #define CPU_SB1         12310201        /* octal 'SB', 01.  */
+#define CPU_ALLEGREX2   10111420        /* octal 'AL', 20.  */
+#define CPU_ALLEGREX3   10111430        /* octal 'AL', 30.  */
+#define CPU_ALLEGREX31  10111431        /* octal 'AL', 31.  */
 
 /* Test for membership in an ISA including chip specific ISAs.  INSN
    is pointer to an element of the opcode table; ISA is the specified
@@ -474,6 +483,12 @@ struct mips_opcode
      || (cpu == CPU_R3900 && ((insn)->membership & INSN_3900) != 0)	\
      || ((cpu == CPU_R10000 || cpu == CPU_R12000)			\
 	 && ((insn)->membership & INSN_10000) != 0)			\
+     || (cpu == CPU_ALLEGREX2						\
+	 && ((insn)->membership & INSN_ALLEGREX2) != 0)			\
+     || (cpu == CPU_ALLEGREX3						\
+	 && ((insn)->membership & INSN_ALLEGREX3) != 0)			\
+     || (cpu == CPU_ALLEGREX31						\
+	 && ((insn)->membership & INSN_ALLEGREX31) != 0)		\
      || (cpu == CPU_SB1 && ((insn)->membership & INSN_SB1) != 0)	\
      || (cpu == CPU_R4111 && ((insn)->membership & INSN_4111) != 0)	\
      || (cpu == CPU_VR4120 && ((insn)->membership & INSN_4120) != 0)	\
@@ -587,6 +602,12 @@ enum
   M_LI_DD,
   M_LI_S,
   M_LI_SS,
+  M_LVHI_S,
+  M_LVHI_P,
+  M_LVI_S,
+  M_LVI_P,
+  M_LVI_T,
+  M_LVI_Q,
   M_LL_AB,
   M_LLD_AB,
   M_LS_A,
@@ -600,6 +621,10 @@ enum
   M_LWC2_AB,
   M_LWC3_A,
   M_LWC3_AB,
+  M_LV_S_AB,
+  M_LV_Q_AB,
+  M_LVL_Q_AB,
+  M_LVR_Q_AB,
   M_LWL_A,
   M_LWL_AB,
   M_LWR_A,
@@ -672,6 +697,10 @@ enum
   M_SWC2_AB,
   M_SWC3_A,
   M_SWC3_AB,
+  M_SV_S_AB,
+  M_SV_Q_AB,
+  M_SVL_Q_AB,
+  M_SVR_Q_AB,
   M_SWL_A,
   M_SWL_AB,
   M_SWR_A,
@@ -695,12 +724,24 @@ enum
   M_ULHU_A,
   M_ULW,
   M_ULW_A,
+  M_ULV_S,
+  M_ULV_S_A,
+  M_ULV_Q,
+  M_ULV_Q_AB,
   M_USH,
   M_USH_A,
   M_USW,
   M_USW_A,
   M_USD,
   M_USD_A,
+  M_USV_S,
+  M_USV_S_A,
+  M_USV_Q,
+  M_USV_Q_AB,
+  M_VCMOV_P,
+  M_VCMOV_Q,
+  M_VCMOV_S,
+  M_VCMOV_T,
   M_XOR_I,
   M_COP0,
   M_COP1,
