@@ -1785,7 +1785,7 @@ append_insn (place, ip, address_expr, reloc_type)
       if (! mips_opts.mips16
 	  && ISA_HAS_COPROC_DELAYS (mips_opts.isa)
 	  && (((prev_pinfo & INSN_LOAD_COPROC_DELAY)
-               && ! cop_interlocks)
+               && ! (cop_interlocks || CPU_IS_ALLEGREX (mips_arch)))
 	      || (! gpr_interlocks
 		  && (prev_pinfo & INSN_LOAD_MEMORY_DELAY))))
 	{
@@ -1805,7 +1805,7 @@ append_insn (place, ip, address_expr, reloc_type)
       else if (! mips_opts.mips16
 	       && ISA_HAS_COPROC_DELAYS (mips_opts.isa)
 	       && (((prev_pinfo & INSN_COPROC_MOVE_DELAY)
-		    && ! cop_interlocks)
+		    && ! (cop_interlocks || CPU_IS_ALLEGREX (mips_arch)))
 		   || (mips_opts.isa == ISA_MIPS1
 		       && (prev_pinfo & INSN_COPROC_MEMORY_DELAY))))
 	{
