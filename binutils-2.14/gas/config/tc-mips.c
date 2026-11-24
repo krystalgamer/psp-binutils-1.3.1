@@ -9294,8 +9294,8 @@ mips_ip (str, ip)
      not available while it is enabled.  */
   if (mips_opts.vfpu && strlen (str) == 4 && str[2] == 'c' && str[3] == '2'
       && (((str[0] == 'l' || str[0] == 's') && str[1] == 'w')
-	  || ((str[0] == 'm' || str[0] == 'c')
-	      && (str[1] == 'f' || str[1] == 't'))))
+	  || (str[0] == 'm' && (str[1] == 'f' || str[1] == 't'))
+	  || (str[0] == 'c' && (str[1] == 'f' || str[1] == 't'))))
     {
       insn_error = "opcode not supported on this processor";
       return;
@@ -9822,7 +9822,7 @@ mips_ip (str, ip)
 			    case '0':	/* single word */
 			      idx = vidx;
 			      fsl = vfsl;
-			      dtype_err = (dtype != 's');
+			      dtype_err = (dtype != 'c') && (dtype != 's');
 			      break;
 			    case '1':	/* pare word */
 			      idx = vidx;
@@ -10038,7 +10038,7 @@ mips_ip (str, ip)
 		    {
 		      char *prefix_out = NULL;
 		      bfd_boolean *prefix_bool = NULL;
-		      char *prefix_type = NULL;
+		      char *prefix_type;
 		      int num_args = 0;
 		      char *ob = ++s;
 		      bfd_boolean has_w = FALSE;
@@ -10381,8 +10381,8 @@ mips_ip (str, ip)
 		    char *rot_str = s;
 		    int rot_idx = 0;
 		    int rot_neg = 0;
-		    int rot_sin = 3;
-		    int rot_cos = 3;
+		    int rot_sin = -1;
+		    int rot_cos = -1;
 		    int rot_err = 0;
 		    int rot_n;
 		    int rot_neg_n = 0;
@@ -10445,9 +10445,9 @@ mips_ip (str, ip)
 
 		    if ((rot_sin_n == 0) && (rot_cos_n == 0))
 		      {
-			if (rot_n == 2)
-			  rot_sin = 2;
-			else if ((rot_n == 4) || (rot_n == 3))
+			/* Only a pair may leave both out; sine and cosine
+			   then default to -1, i.e. 3 once masked.  */
+			if ((rot_n == 4) || (rot_n == 3))
 			  rot_err = 1;
 		      }
 
