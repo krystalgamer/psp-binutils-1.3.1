@@ -129,6 +129,7 @@ DESCRIPTION
 
 #include "bfd.h"
 #include "sysdep.h"
+#include <stdarg.h>
 #include "libbfd.h"
 #include "aout/ar.h"
 #include "aout/ranlib.h"
@@ -141,6 +142,25 @@ extern int errno;
 #ifdef GNU960
 #define BFD_GNU960_ARMAG(abfd)	(BFD_COFF_FILE_P((abfd)) ? ARMAG : ARMAGB)
 #endif
+
+/* sprintf into an ar header field.  The terminating NUL deliberately
+   lands in the next field (it is replaced or overwritten afterwards),
+   which a fortified sprintf bounded by the field would reject.  */
+
+static void ar_field_sprintf PARAMS ((char *, const char *, ...));
+
+static void
+ar_field_sprintf (char *field, const char *fmt, ...)
+{
+  char buf[64];
+  int len;
+  va_list ap;
+
+  va_start (ap, fmt);
+  len = vsprintf (buf, fmt, ap);
+  va_end (ap);
+  memcpy (field, buf, len + 1);
+}
 
 /* We keep a cache of archive filepointers to archive elements to
    speed up searching the archive by filepos.  We only add an entry to
@@ -1329,7 +1349,8 @@ _bfd_construct_extended_name_table (abfd, trailing_slash, tabloc, tablen)
 	  hdr->ar_name[0] = ar_padchar (current);
 	  /* We know there will always be enough room (one of the few
 	     cases where you may safely use sprintf).  */
-	  sprintf ((hdr->ar_name) + 1, "%-d", (unsigned) (strptr - *tabloc));
+	  ar_field_sprintf ((char *) hdr + offsetof (struct ar_hdr, ar_name) + 1,
+			    "%-d", (unsigned) (strptr - *tabloc));
 	  /* Kinda Kludgy.  We should just use the returned value of
 	     sprintf but not all implementations get this right.  */
 	  {
@@ -1420,7 +1441,8 @@ bfd_ar_hdr_from_filesystem (abfd, filename, member)
   strncpy (hdr->ar_fmag, ARFMAG, 2);
 
   /* Goddamned sprintf doesn't permit MAXIMUM field lengths.  */
-  sprintf ((hdr->ar_date), "%-12ld", (long) status.st_mtime);
+  ar_field_sprintf ((char *) hdr + offsetof (struct ar_hdr, ar_date),
+		    "%-12ld", (long) status.st_mtime);
 #ifdef HPUX_LARGE_AR_IDS
   /* HP has a very "special" way to handle UID/GID's with numeric values
      > 99999.  */
@@ -1428,7 +1450,8 @@ bfd_ar_hdr_from_filesystem (abfd, filename, member)
     hpux_uid_gid_encode (hdr->ar_gid, (long) status.st_uid);
   else
 #endif
-    sprintf ((hdr->ar_uid), "%ld", (long) status.st_uid);
+    ar_field_sprintf ((char *) hdr + offsetof (struct ar_hdr, ar_uid),
+		      "%ld", (long) status.st_uid);
 #ifdef HPUX_LARGE_AR_IDS
   /* HP has a very "special" way to handle UID/GID's with numeric values
      > 99999.  */
@@ -1436,9 +1459,12 @@ bfd_ar_hdr_from_filesystem (abfd, filename, member)
     hpux_uid_gid_encode (hdr->ar_uid, (long) status.st_gid);
   else
 #endif
-  sprintf ((hdr->ar_gid), "%ld", (long) status.st_gid);
-  sprintf ((hdr->ar_mode), "%-8o", (unsigned int) status.st_mode);
-  sprintf ((hdr->ar_size), "%-10ld", (long) status.st_size);
+  ar_field_sprintf ((char *) hdr + offsetof (struct ar_hdr, ar_gid),
+		    "%ld", (long) status.st_gid);
+  ar_field_sprintf ((char *) hdr + offsetof (struct ar_hdr, ar_mode),
+		    "%-8o", (unsigned int) status.st_mode);
+  ar_field_sprintf ((char *) hdr + offsetof (struct ar_hdr, ar_size),
+		    "%-10ld", (long) status.st_size);
   /* Correct for a lossage in sprintf whereby it null-terminates.  I cannot
      understand how these C losers could design such a ramshackle bunch of
      IO operations.  */
@@ -1754,7 +1780,8 @@ _bfd_write_archive_contents (arch)
       memset ((char *) (&hdr), 0, sizeof (struct ar_hdr));
       strcpy (hdr.ar_name, ename);
       /* Round size up to even number in archive header.  */
-      sprintf (&(hdr.ar_size[0]), "%-10d",
+      ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_size),
+			"%-10d",
 	       (int) ((elength + 1) & ~(bfd_size_type) 1));
       strncpy (hdr.ar_fmag, ARFMAG, 2);
       for (i = 0; i < sizeof (struct ar_hdr); i++)
@@ -2002,15 +2029,20 @@ bsd_write_armap (arch, elength, map, orl_count, stridx)
 
   stat (arch->filename, &statbuf);
   memset ((char *) (&hdr), 0, sizeof (struct ar_hdr));
-  sprintf (hdr.ar_name, RANLIBMAG);
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_name),
+		    RANLIBMAG);
   /* Remember the timestamp, to keep it holy.  But fudge it a little.  */
   bfd_ardata (arch)->armap_timestamp = statbuf.st_mtime + ARMAP_TIME_OFFSET;
   bfd_ardata (arch)->armap_datepos = (SARMAG
 				      + offsetof (struct ar_hdr, ar_date[0]));
-  sprintf (hdr.ar_date, "%ld", bfd_ardata (arch)->armap_timestamp);
-  sprintf (hdr.ar_uid, "%ld", (long) getuid ());
-  sprintf (hdr.ar_gid, "%ld", (long) getgid ());
-  sprintf (hdr.ar_size, "%-10d", (int) mapsize);
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_date),
+		    "%ld", bfd_ardata (arch)->armap_timestamp);
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_uid),
+		    "%ld", (long) getuid ());
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_gid),
+		    "%ld", (long) getgid ());
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_size),
+		    "%-10d", (int) mapsize);
   strncpy (hdr.ar_fmag, ARFMAG, 2);
   for (i = 0; i < sizeof (struct ar_hdr); i++)
     if (((char *) (&hdr))[i] == '\0')
@@ -2101,7 +2133,8 @@ _bfd_archive_bsd_update_armap_timestamp (arch)
 
   /* Prepare an ASCII version suitable for writing.  */
   memset (hdr.ar_date, 0, sizeof (hdr.ar_date));
-  sprintf (hdr.ar_date, "%ld", bfd_ardata (arch)->armap_timestamp);
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_date),
+		    "%ld", bfd_ardata (arch)->armap_timestamp);
   for (i = 0; i < sizeof (hdr.ar_date); i++)
     if (hdr.ar_date[i] == '\0')
       (hdr.ar_date)[i] = ' ';
@@ -2168,12 +2201,15 @@ coff_write_armap (arch, elength, map, symbol_count, stridx)
 
   memset ((char *) (&hdr), 0, sizeof (struct ar_hdr));
   hdr.ar_name[0] = '/';
-  sprintf (hdr.ar_size, "%-10d", (int) mapsize);
-  sprintf (hdr.ar_date, "%ld", (long) time (NULL));
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_size),
+		    "%-10d", (int) mapsize);
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_date),
+		    "%ld", (long) time (NULL));
   /* This, at least, is what Intel coff sets the values to.  */
-  sprintf ((hdr.ar_uid), "%d", 0);
-  sprintf ((hdr.ar_gid), "%d", 0);
-  sprintf ((hdr.ar_mode), "%-7o", (unsigned) 0);
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_uid), "%d", 0);
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_gid), "%d", 0);
+  ar_field_sprintf ((char *) &hdr + offsetof (struct ar_hdr, ar_mode),
+		    "%-7o", (unsigned) 0);
   strncpy (hdr.ar_fmag, ARFMAG, 2);
 
   for (i = 0; i < sizeof (struct ar_hdr); i++)
